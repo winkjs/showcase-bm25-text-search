@@ -1,0 +1,28 @@
+{
+  "name": "bm25-search-demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/winkjs/bm25-search-demo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/winkjs/bm25-search-demo/issues"
+  },
+  "homepage": "https://github.com/winkjs/bm25-search-demo#readme",
+  "devDependencies": {
+    "browserify": "^16.2.3",
+    "grunt": "^1.0.4",
+    "grunt-browserify": "^5.3.0"
+  },
+  "dependencies": {
+    "wink-bm25-text-search": "^3.0.0",
+    "wink-nlp-utils": "^2.0.3"
+  }
+}
