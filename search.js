@@ -51,9 +51,15 @@ console.log( docs[ results[ 0 ][ 0 ] ] );
 window.addEventListener('DOMContentLoaded', function () {
     document.getElementById('search').addEventListener('keyup', function (el) {
       var results = engine.search(el.target.value);
-      if ( results.length < 1 ) return false;
-      var result = docs[results[0][0]];
-      document.getElementById('title').innerText = result.title;
-      document.getElementById('body').innerText = result.body;
+      if ( results.length < 1 ) {
+        document.getElementById('title').style.display = 'none';
+        document.getElementById('body').style.display = 'none';
+      } else {
+        var result = docs[results[0][0]];
+        document.getElementById('title').style.display = 'block';
+        document.getElementById('body').style.display = 'block';
+        document.getElementById('title').innerText = result.title;
+        document.getElementById('body').innerText = result.body;
+      }
     })
 });
