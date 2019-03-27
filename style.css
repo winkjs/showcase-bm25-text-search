@@ -1,0 +1,28 @@
+html,
+body {
+  background: #eaeaea;
+  margin: 0;
+  padding: 0;
+  font-family:'ff-tisa-sans-web-pro', serif;
+}
+
+a {
+  color: #6C307D;
+}
+
+.container {
+  width: 640px;
+  margin: 0 auto;
+}
+
+header {
+  padding-top: 50px;
+  border-bottom: 4px solid black;
+  display: flex;
+}
+
+input {
+  border: none;
+  border-bottom: 2px solid #6C307D;
+  background: transparent;
+}

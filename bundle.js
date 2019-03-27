@@ -5528,19 +5528,44 @@ console.log( docs[ results[ 0 ][ 0 ] ] );
 // -> Michelle LaVaughn Robinson Obama (born January 17, 1964) is...
 
 window.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('search').addEventListener('keyup', function (el) {
-      var results = engine.search(el.target.value);
-      if ( results.length < 1 ) {
-        document.getElementById('title').style.display = 'none';
-        document.getElementById('body').style.display = 'none';
-      } else {
-        var result = docs[results[0][0]];
-        document.getElementById('title').style.display = 'block';
-        document.getElementById('body').style.display = 'block';
-        document.getElementById('title').innerText = result.title;
-        document.getElementById('body').innerText = result.body;
-      }
-    })
+  hide('title');
+  hide('body');
+  hide('noresults');
+  document.getElementById('search').addEventListener('keyup', function (el) {
+    if (el.target.value === '') {
+      hide('title');
+      hide('body');
+      hide('noresults');
+      show('help');
+      return false;
+    } else {
+      hide('help');
+    }
+
+    var results = engine.search(el.target.value);
+    if ( results.length < 1 ) {
+      hide('title');
+      hide('body');
+      show('noresults');
+    } else {
+      hide('noresults');
+      var result = docs[results[0][0]];
+      show('title');
+      show('body');
+      text('title', result.title);
+      text('body', result.body);
+    }
+  })
+
+  function hide(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+  function show(id) {
+    document.getElementById(id).style.display = 'block';
+  }
+  function text(id,text) {
+    document.getElementById(id).innerText = text;
+  }
 });
 
 },{"wink-bm25-text-search":2,"wink-bm25-text-search/sample-data/data-for-wink-bm25.json":1,"wink-nlp-utils":46}]},{},[50]);
