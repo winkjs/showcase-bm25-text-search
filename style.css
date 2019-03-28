@@ -10,6 +10,18 @@ a {
   color: #6C307D;
 }
 
+.hidden {
+  transition: all 333ms ease;
+  opacity: 0;
+  padding-top: 40px;
+}
+
+.shown {
+  transition: all 333ms ease;
+  opacity: 1;
+  padding-top: 0px;
+}
+
 .container {
   width: 640px;
   margin: 120px auto;
@@ -71,8 +83,13 @@ input:focus {
   color: #aaa;
 }
 
-h2 {
+h3, h2 {
   margin-bottom: 0;
+  text-transform: capitalize;
+}
+
+h3 {
+  margin-top: 60px;
 }
 
 p {
