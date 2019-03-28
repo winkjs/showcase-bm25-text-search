@@ -14,27 +14,29 @@
         <h1>Wink BM25 Text Search</h1>
 
         <nav>
-          <ul>
-            <li>
-              <a href="https://github.com/winkjs/bm25-search-demo">Github</a>
-            </li>
-            <li>
-              <!-- TODO: Fix the link -->
-              <a href="https://winkjs.org/blog.html">Blog</a>
-            </li>
-          </ul>
+            <a href="https://github.com/winkjs/bm25-search-demo">Github</a>
+            &nbsp;&middot;&nbsp;
+            <a href="https://winkjs.org/blog.html">Blog</a>
         </nav>
       </header>
       <input type="search" id="search" value="" placeholder="Search term" autocomplete="off">
       <div id="help">
-        imheretohalp
+        Try different search terms like:
+        <ul>
+          <li>First lady</li>
+          <li>Georgia</li>
+          <li>President</li>
+          <li>Law school</li>
+        </ul>
       </div>
       <div id="noresults">
-        <h2>no results</h2>
+        <h2>No Results</h2>
         <p>Try a different search term like "Obama"</p>
       </div>
-      <h3 id="title"></h3>
-      <p id="body"></p>
+      <div class="results">
+        <h2 id="title"></h3>
+        <p id="body"></p>
+      </div>
     </div>
   </body>
 </html>

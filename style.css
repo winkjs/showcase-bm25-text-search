@@ -12,17 +12,69 @@ a {
 
 .container {
   width: 640px;
-  margin: 0 auto;
+  margin: 120px auto;
 }
 
 header {
   padding-top: 50px;
   border-bottom: 4px solid black;
   display: flex;
+  align-items: baseline;
 }
 
+h1 {
+  margin: 0;
+}
+
+nav {
+  flex-grow: 1;
+  text-align: right;
+}
+
+
 input {
+  font-family:'ff-tisa-sans-web-pro', serif;
   border: none;
   border-bottom: 2px solid #6C307D;
+  width: 100%;
+  font-size: 40px;
   background: transparent;
+  margin-bottom: 30px;
+}
+
+input::placeholder {
+  color: #ccc;
+}
+
+input:focus {
+  outline: 0;
+}
+
+#help {
+  line-height: 25px;
+  font-family: 'Hoefler Text', Georgia, serif;
+  color: #666;
+  font-size: 18px;
+  margin-top: 60px;
+}
+
+#noresults {
+  text-align: center;
+  line-height: 25px;
+  font-family: 'Hoefler Text', Georgia, serif;
+  color: #ccc;
+  font-size: 18px;
+  margin-top: 60px;
+}
+
+#noresults h2 {
+  color: #aaa;
+}
+
+h2 {
+  margin-bottom: 0;
+}
+
+p {
+  margin-top: 0;
 }
