@@ -1,72 +1,118 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+// ### getFoundTerms
+/**
+ *
+ * Obtains the spotted search terms from the resultant text.
+ *
+ * @param {array[]} results contains the search results.
+ * @param {string} query being searched.
+ * @param {Object[]} docs being searched.
+ * @param {string[]} fields of the `docs`.
+ * @param {function[]} pipe in use for prep task.
+ * @param {number} rwIndex index of `removeWords()` function.
+ * @return {string[]} of search terms found in the `results` `docs`.
+ */
+var getSpottedTerms = function ( results, query, docs, fields, pipe, rwIndex ) {
+  // Upto the `removeWords` pipe.
+  var pipe1 = pipe.slice( 0, rwIndex );
+  // From `removeWords` and beyond pipe.
+  var pipe2 = pipe.slice( rwIndex );
+  // Copy of query.
+  var q = query.slice( 0 );
+  // Total text for search `results` for `fields`.
+  var t = [];
+  // Spotted terms.
+  var st = Object.create( null );
+
+  // Empty results => empty found terms!
+  if ( results.length === 0 ) return [];
+
+  // Transform query as per the overall pipe.
+  for ( let i = 0; i < pipe.length; i += 1 ) {
+    q = pipe[ i ]( q );
+  }
+
+  // Extract total text from all fields of resultant docs.
+  results.forEach( function ( r ) {
+    fields.forEach( ( f ) => ( t.push( docs[r[ 0 ]][ f ] ) ) );
+  } );
+  t = t.join( ' ' );
+
+  pipe1.forEach( function ( f ) {
+    t = f( t );
+  } );
+  // It is text that has been LowerCased, tokenized, and stop words removed.
+  var tRef = t.slice( 0 );
+
+  // Now stem & negation handling – means words might get transformed i.e.
+  // stemmed and may be prefixed with `!` due to negation.
+  pipe2.forEach( function ( f ) {
+    t = f( t );
+  } );
+
+  // Build a list of spotted terms by searching `t[ i ]` in `q` and
+  // if found, build the `st` using the corresponding `tRef[ i ]`.
+  for ( let i = 0; i < t.length; i += 1 ) {
+    if ( q.indexOf( t[ i ] ) !== -1 ) {
+      st[ tRef[ i ] ] = true;
+    }
+  }
+
+  // Convert to array & return!
+  return Object.keys( st );
+};
+
+module.exports = getSpottedTerms;
+
+},{}],2:[function(require,module,exports){
 module.exports=[
   {
     "title":  "Barack Obama",
-    "body": "Barack Hussein Obama II born August 4, 1961 is an American politician who served as the 44th President of the United States from 2009 to 2017. He is the first African American to have served as president. He previously served in the U.S. Senate representing Illinois from 2005 to 2008, and in the Illinois State Senate from 1997 to 2004.",
-    "tags": "politician democratic party nobel peace prize columbia university harvard Michelle",
-    "mob": "august"
+    "body": "Barack Hussein Obama II born August 4, 1961 is an American politician who served as the 44th President of the United States from 2009 to 2017. He is the first African American to have served as president. He previously served in the U.S. Senate representing Illinois from 2005 to 2008, and in the Illinois State Senate from 1997 to 2004."
   },
   {
     "title": "Michelle Obama",
-    "body": "Michelle LaVaughn Robinson Obama (born January 17, 1964) is an American lawyer and writer who was First Lady of the United States from 2009 to 2017. She is married to the 44th President of the United States, Barack Obama, and was the first African-American First Lady. Raised on the South Side of Chicago, Illinois, Obama is a graduate of Princeton University and Harvard Law School, and spent her early legal career working at the law firm Sidley Austin, where she met her husband. She subsequently worked as the Associate Dean of Student Services at the University of Chicago and the Vice President for Community and External Affairs of the University of Chicago Medical Center. Barack and Michelle married in 1992 and have two daughters.",
-    "tags": "harvard Princeton first lady barack married",
-    "mob": "january"
+    "body": "Michelle LaVaughn Robinson Obama (born January 17, 1964) is an American lawyer and writer who was First Lady of the United States from 2009 to 2017. She is married to the 44th President of the United States, Barack Obama, and was the first African-American First Lady. Raised on the South Side of Chicago, Illinois, Obama is a graduate of Princeton University and Harvard Law School, and spent her early legal career working at the law firm Sidley Austin, where she met her husband. She subsequently worked as the Associate Dean of Student Services at the University of Chicago and the Vice President for Community and External Affairs of the University of Chicago Medical Center. Barack and Michelle married in 1992 and have two daughters."
   },
   {
     "title": "William meaning bill clinton",
-    "body": "William Jefferson Clinton (born William Jefferson Blythe III; August 19, 1946), commonly known as Bill Clinton, is an American politician who served as the 42nd President of the United States from 1993 to 2001. Prior to the Presidency he was the 40th Governor of Arkansas from 1979 to 1981 and the state's 42nd Governor from 1983 to 1992. Before that, he served as Arkansas Attorney General from 1977 to 1979. A member of the Democratic Party, Clinton was ideologically a New Democrat, and many of his policies reflected a centrist political philosophy. Clinton was born and raised in Arkansas and is an alumnus of Georgetown University, where he was a member of Kappa Kappa Psi and the Phi Beta Kappa Society; he earned a Rhodes Scholarship to attend the University of Oxford. Clinton is married to Hillary Rodham Clinton, who served as United States Secretary of State from 2009 to 2013 and U.S. Senator from New York from 2001 to 2009, and was the Democratic nominee for President in 2016. Bill Clinton and Hillary Rodham both earned degrees from Yale Law School, where they met and began dating. As Governor of Arkansas, Clinton overhauled the state's education system and served as chairman of the National Governors Association.",
-    "tags": "Yale wife Hillary Georgetown university bill clinton oxford Rhodes scholar preceeded Senior George Bush ",
-    "mob": "august"
+    "body": "William Jefferson Clinton (born William Jefferson Blythe III; August 19, 1946), commonly known as Bill Clinton, is an American politician who served as the 42nd President of the United States from 1993 to 2001. Prior to the Presidency he was the 40th Governor of Arkansas from 1979 to 1981 and the state's 42nd Governor from 1983 to 1992. Before that, he served as Arkansas Attorney General from 1977 to 1979. A member of the Democratic Party, Clinton was ideologically a New Democrat, and many of his policies reflected a centrist political philosophy. Clinton was born and raised in Arkansas and is an alumnus of Georgetown University, where he was a member of Kappa Kappa Psi and the Phi Beta Kappa Society; he earned a Rhodes Scholarship to attend the University of Oxford. Clinton is married to Hillary Rodham Clinton, who served as United States Secretary of State from 2009 to 2013 and U.S. Senator from New York from 2001 to 2009, and was the Democratic nominee for President in 2016. Bill Clinton and Hillary Rodham both earned degrees from Yale Law School, where they met and began dating. As Governor of Arkansas, Clinton overhauled the state's education system and served as chairman of the National Governors Association."
   },
   {
     "title": "Hillary Rodham Clinton",
-    "body": "Hillary Diane Rodham Clinton (/ˈhɪləri daɪˈæn ˈrɒdəm ˈklɪntən/; born October 26, 1947) is an American politician who was the 67th United States Secretary of State from 2009 to 2013, U.S. Senator from New York from 2001 to 2009, First Lady of the United States from 1993 to 2001, and the Democratic Party's nominee for President of the United States in the 2016 election. Born in Chicago, Illinois, and raised in the Chicago suburb of Park Ridge, Clinton graduated from Wellesley College in 1969, and earned a J.D. from Yale Law School in 1973. After serving as a congressional legal counsel, she moved to Arkansas and married Bill Clinton in 1975. In 1977, she co-founded Arkansas Advocates for Children and Families. She was appointed the first female chair of the Legal Services Corporation in 1978 and became the first female partner at Rose Law Firm the following year. As First Lady of Arkansas, she led a task force whose recommendations helped reform Arkansas's public schools.",
-    "tags": "first lady ladies Arkansas husband bill clinton Wellesley college Yale University",
-    "mob": "october"
+    "body": "Hillary Diane Rodham Clinton (/ˈhɪləri daɪˈæn ˈrɒdəm ˈklɪntən/; born October 26, 1947) is an American politician who was the 67th United States Secretary of State from 2009 to 2013, U.S. Senator from New York from 2001 to 2009, First Lady of the United States from 1993 to 2001, and the Democratic Party's nominee for President of the United States in the 2016 election. Born in Chicago, Illinois, and raised in the Chicago suburb of Park Ridge, Clinton graduated from Wellesley College in 1969, and earned a J.D. from Yale Law School in 1973. After serving as a congressional legal counsel, she moved to Arkansas and married Bill Clinton in 1975. In 1977, she co-founded Arkansas Advocates for Children and Families. She was appointed the first female chair of the Legal Services Corporation in 1978 and became the first female partner at Rose Law Firm the following year. As First Lady of Arkansas, she led a task force whose recommendations helped reform Arkansas's public schools."
   },
   {
     "title": "George W Bush",
-    "body": "George Walker Bush (born July 6, 1946) is an American politician who served as the 43rd President of the United States from 2001 to 2009. He was also the 46th Governor of Texas from 1995 to 2000. After graduating from Yale University in 1968 and Harvard Business School in 1975, he worked in the oil industry. Bush married Laura Welch in 1977 and ran unsuccessfully for the House of Representatives shortly thereafter. He later co-owned the Texas Rangers baseball team before defeating Ann Richards in the 1994 Texas gubernatorial election. Bush was elected president in 2000 after a close and controversial win over Democratic rival Al Gore, becoming the fourth president to be elected while receiving fewer popular votes than his opponent.[3]",
-    "tags": "Republican wife laura Bush Yale university harvard succeeded Bill Clinton",
-    "mob": "july"
+    "body": "George Walker Bush (born July 6, 1946) is an American politician who served as the 43rd President of the United States from 2001 to 2009. He was also the 46th Governor of Texas from 1995 to 2000. After graduating from Yale University in 1968 and Harvard Business School in 1975, he worked in the oil industry. He never studied Law. Bush married Laura Welch in 1977 and ran unsuccessfully for the House of Representatives shortly thereafter. He later co-owned the Texas Rangers baseball team before defeating Ann Richards in the 1994 Texas gubernatorial election. Bush was elected president in 2000 after a close and controversial win over Democratic rival Al Gore, becoming the fourth president to be elected while receiving fewer popular votes than his opponent.[3]"
   },
   {
     "title": "laura W Bush",
-    "body": "Laura Lane Welch Bush (born November 4, 1946) is the wife of the 43rd President of the United States, George W. Bush, and was the First Lady from 2001 to 2009.[1][2] Bush graduated from Southern Methodist University in 1968 with a bachelor's degree in education, and took a job as a second grade teacher. After attaining her master's degree in library science at the University of Texas at Austin, she was employed as a librarian. Bush met her future husband, George W. Bush, in 1977, and they were married later that year. The couple had twin daughters in 1981. Bush's political involvement began during her marriage. She campaigned with her husband during his unsuccessful 1978 run for the United States Congress, and later for his successful Texas gubernatorial campaign.",
-    "tags": "First lady Republican husband George W Bush texas Austin university preceeded Hillary Clinton succeeded Michelle Obama",
-    "mob": "november"
+    "body": "Laura Lane Welch Bush (born November 4, 1946) is the wife of the 43rd President of the United States, George W. Bush, and was the First Lady from 2001 to 2009.[1][2] Bush graduated from Southern Methodist University in 1968 with a bachelor's degree in education, and took a job as a second grade teacher. After attaining her master's degree in library science at the University of Texas at Austin, she was employed as a librarian. Bush met her future husband, George W. Bush, in 1977, and they were married later that year. The couple had twin daughters in 1981. Bush's political involvement began during her marriage. She campaigned with her husband during his unsuccessful 1978 run for the United States Congress, and later for his successful Texas gubernatorial campaign."
   },
   {
     "title": "George H W Bush",
-    "body": "George Herbert Walker Bush (born June 12, 1924) is an American politician who was the 41st President of the United States from 1989 to 1993 and the 43rd Vice President of the United States from 1981 to 1989. A member of the Republican Party, he was previously a congressman, ambassador, and Director of Central Intelligence. He is the oldest living former President and Vice President. Since 2000, Bush has often been referred to as George H. W. Bush, Bush 41, Bush the Elder, or George Bush Senior to distinguish him from his eldest son, George W. Bush, who became the 43rd President of the United States after the 2000 election.",
-    "tags": "Republican wife Barbara Bush Yale university US millitary service Navy Rank lieutenant World war II preceeded Ronald Reagan succeeded Bill Clinton",
-    "mob": "june"
+    "body": "George Herbert Walker Bush (born June 12, 1924) is an American politician who was the 41st President of the United States from 1989 to 1993 and the 43rd Vice President of the United States from 1981 to 1989. A member of the Republican Party, he was previously a congressman, ambassador, and Director of Central Intelligence. He is the oldest living former President and Vice President. Since 2000, Bush has often been referred to as George H. W. Bush, Bush 41, Bush the Elder, or George Bush Senior to distinguish him from his eldest son, George W. Bush, who became the 43rd President of the United States after the 2000 election."
   },
   {
     "title": "Barbara Bush",
-    "body": "Barbara Bush (née Pierce; born June 8, 1925) is the wife of George H. W. Bush, the 41st President of the United States, and served as First Lady of the United States from 1989 to 1993. She is the mother of George W. Bush, the 43rd President, and Jeb Bush, the 43rd Governor of Florida. She served as the Second Lady of the United States from 1981 to 1989. Barbara Pierce was born in Flushing, New York. She attended Milton Public School from 1931 to 1937, and Rye Country Day School from 1937-1940. She graduated from Ashley Hall School in Charleston, South Carolina. She met George Herbert Walker Bush at age 16, and the two married in Rye, New York in 1945, while he was on leave during his deployment as a Naval officer in World War II. While George was attending Yale University at age 22, Barbara and George were living in New Haven, Connecticut and had their first son, George Walker Bush, on July 6, 1946. (Thus, her first son, the eventual 43rd President of the United States, was the first Connecticut native to assume that office. George W. would eventually return to his hometown of New Haven in 1964 to attend Yale like his father did.) They had six children together. The Bush family soon moved to Midland, Texas, where their second son, Jeb was born in, on February 11, 1953; as George Bush entered political life, she raised their children.",
-    "tags": "Republican first lady second lady Smith College Republican george h w bush husband ",
-    "mob": "june"
+    "body": "Barbara Bush (née Pierce; born June 8, 1925) is the wife of George H. W. Bush, the 41st President of the United States, and served as First Lady of the United States from 1989 to 1993. She is the mother of George W. Bush, the 43rd President, and Jeb Bush, the 43rd Governor of Florida. She served as the Second Lady of the United States from 1981 to 1989. Barbara Pierce was born in Flushing, New York. She attended Milton Public School from 1931 to 1937, and Rye Country Day School from 1937-1940. She graduated from Ashley Hall School in Charleston, South Carolina. She met George Herbert Walker Bush at age 16, and the two married in Rye, New York in 1945, while he was on leave during his deployment as a Naval officer in World War II. While George was attending Yale University at age 22, Barbara and George were living in New Haven, Connecticut and had their first son, George Walker Bush, on July 6, 1946. (Thus, her first son, the eventual 43rd President of the United States, was the first Connecticut native to assume that office. George W. would eventually return to his hometown of New Haven in 1964 to attend Yale like his father did.) They had six children together. The Bush family soon moved to Midland, Texas, where their second son, Jeb was born in, on February 11, 1953; as George Bush entered political life, she raised their children."
   },
   {
     "title": "Ronald Reagan",
-    "body": "Ronald Wilson Reagan (/ˈrɒnəld ˈwɪlsən ˈreɪɡən/) (February 6, 1911 – June 5, 2004) was an American politician and actor who served as the 40th President of the United States from 1981 to 1989. Before his presidency, he was the 33rd Governor of California, from 1967 to 1975, after a career as a Hollywood actor and union leader. Raised in a poor family in small towns of northern Illinois, Reagan graduated from Eureka College in 1932 and worked as a sports announcer on several regional radio stations. After moving to Hollywood in 1937, he became an actor and starred in a few major productions. Reagan was twice elected President of the Screen Actors Guild, the labor union for actors, where he worked to root out Communist influence.",
-    "tags": "Eureka College Republican Hollywood Actor Captain US millitary service rank Captain US Army Air forces preceeded Jimmy Carter wife Nancy",
-    "mob": "february"
+    "body": "Ronald Wilson Reagan (/ˈrɒnəld ˈwɪlsən ˈreɪɡən/) (February 6, 1911 – June 5, 2004) was an American politician and actor who served as the 40th President of the United States from 1981 to 1989. Before his presidency, he was the 33rd Governor of California, from 1967 to 1975, after a career as a Hollywood actor and union leader. Raised in a poor family in small towns of northern Illinois, Reagan graduated from Eureka College in 1932 and worked as a sports announcer on several regional radio stations. After moving to Hollywood in 1937, he became an actor and starred in a few major productions. Reagan was twice elected President of the Screen Actors Guild, the labor union for actors, where he worked to root out Communist influence."
   },
   {
     "title": "Nancy Reagan",
-    "body": "Nancy Davis Reagan (born Anne Frances Robbins; July 6, 1921 – March 6, 2016) was an American film actress, and the wife of the 40th President of the United States, Ronald Reagan. She served as the First Lady of the United States from 1981 to 1989. She was born in New York City. After her parents separated, she lived in Maryland with an aunt and uncle for some years. She moved to Chicago when her mother remarried in 1929, and later took the name Davis from her stepfather. As Nancy Davis, she was a Hollywood actress in the 1940s and 1950s, starring in films such as The Next Voice You Hear..., Night into Morning, and Donovan's Brain. In 1952, she married Ronald Reagan, who was then president of the Screen Actors Guild. They had two children together. Reagan was the First Lady of California when her husband was Governor from 1967 to 1975, and she began to work with the Foster Grandparents Program.",
-    "tags": "Smith College Republican Hollywood Actress husband Ronald Reagon First lady",
-    "mob": "july"
+    "body": "Nancy Davis Reagan (born Anne Frances Robbins; July 6, 1921 – March 6, 2016) was an American film actress, and the wife of the 40th President of the United States, Ronald Reagan. She served as the First Lady of the United States from 1981 to 1989. She was born in New York City. After her parents separated, she lived in Maryland with an aunt and uncle for some years. She moved to Chicago when her mother remarried in 1929, and later took the name Davis from her stepfather. As Nancy Davis, she was a Hollywood actress in the 1940s and 1950s, starring in films such as The Next Voice You Hear..., Night into Morning, and Donovan's Brain. In 1952, she married Ronald Reagan, who was then president of the Screen Actors Guild. They had two children together. Reagan was the First Lady of California when her husband was Governor from 1967 to 1975, and she began to work with the Foster Grandparents Program."
   }
 ]
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 //     wink-bm25-text-search
 //     Fast Full Text Search based on BM25F
 //
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
 //
 //     This file is part of “wink-bm25-text-search”.
 //
@@ -622,7 +668,7 @@ var bm25fIMS = function () {
 
 module.exports = bm25fIMS;
 
-},{"wink-helpers":4}],3:[function(require,module,exports){
+},{"wink-helpers":5}],4:[function(require,module,exports){
 //     wink-distance
 //     Distance functions for Bag of Words, Strings,
 //     Vectors and more.
@@ -724,7 +770,7 @@ var soundex = function ( word, maxLength ) {
 
 module.exports = soundex;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 //     wink-helpers
 //     Functions for cross validation, shuffle, cartesian product and more
 //
@@ -1222,3340 +1268,7 @@ helpers.string.normalize = function ( str ) {
 
 module.exports = helpers;
 
-},{}],5:[function(require,module,exports){
-module.exports=[
-  "i",
-  "me",
-  "my",
-  "myself",
-  "we",
-  "our",
-  "ours",
-  "ourselves",
-  "you",
-  "your",
-  "yours",
-  "yourself",
-  "yourselves",
-  "he",
-  "him",
-  "his",
-  "himself",
-  "she",
-  "her",
-  "hers",
-  "herself",
-  "it",
-  "its",
-  "itself",
-  "they",
-  "them",
-  "their",
-  "theirs",
-  "themselves",
-  "what",
-  "which",
-  "who",
-  "whom",
-  "this",
-  "that",
-  "these",
-  "those",
-  "am",
-  "is",
-  "are",
-  "was",
-  "were",
-  "be",
-  "been",
-  "being",
-  "have",
-  "has",
-  "had",
-  "having",
-  "do",
-  "does",
-  "did",
-  "doing",
-  "would",
-  "should",
-  "could",
-  "ought",
-  "i'm",
-  "you're",
-  "he's",
-  "she's",
-  "it's",
-  "we're",
-  "they're",
-  "i've",
-  "you've",
-  "we've",
-  "they've",
-  "i'd",
-  "you'd",
-  "he'd",
-  "she'd",
-  "we'd",
-  "they'd",
-  "i'll",
-  "you'll",
-  "he'll",
-  "she'll",
-  "we'll",
-  "they'll",
-  "let's",
-  "that's",
-  "who's",
-  "what's",
-  "here's",
-  "there's",
-  "when's",
-  "where's",
-  "why's",
-  "how's",
-  "a",
-  "an",
-  "the",
-  "and",
-  "but",
-  "if",
-  "or",
-  "because",
-  "as",
-  "until",
-  "while",
-  "of",
-  "at",
-  "by",
-  "for",
-  "with",
-  "about",
-  "against",
-  "between",
-  "into",
-  "through",
-  "during",
-  "before",
-  "after",
-  "above",
-  "below",
-  "to",
-  "from",
-  "up",
-  "down",
-  "in",
-  "out",
-  "on",
-  "off",
-  "over",
-  "under",
-  "again",
-  "further",
-  "then",
-  "once",
-  "here",
-  "there",
-  "when",
-  "where",
-  "why",
-  "how",
-  "all",
-  "any",
-  "both",
-  "each",
-  "few",
-  "more",
-  "most",
-  "other",
-  "some",
-  "such",
-  "only",
-  "own",
-  "same",
-  "so",
-  "than",
-  "too",
-  "very"
-]
-
 },{}],6:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### returnIndexer
-
-/**
- *
- * Returns an Indexer object that contains two functions. The first function `build()`
- * incrementally builds an index for each `element` using `itsIndex` — both passed as
- * parameters to it. The second function — `result()` allows accessing the index anytime.
- *
- * It is typically used with [string.soc](#stringsoc), [string.bong](#stringbong),
- * [string.song](#stringsong), and [tokens.sow](#tokenssow).
- *
- * @alias helper#returnIndexer
- * @return {indexer} used to build and access the index.
- * @example
- * var indexer = returnIndexer();
- * // -> { build: [function], result: [function] }
- */
-var returnIndexer = function () {
-  var theIndex = Object.create( null );
-  var methods = Object.create( null );
-
-  // Builds index by adding the `element` and `itsIndex`. The `itsIndex` should
-  // be a valid JS array index; no validation checks are performed while building
-  // index.
-  var build = function ( element, itsIndex ) {
-    theIndex[ element ] = theIndex[ element ] || [];
-    theIndex[ element ].push( itsIndex );
-    return true;
-  }; // build()
-
-  // Returns the index built so far.
-  var result = function () {
-    return theIndex;
-  }; // result()
-
-  methods.build = build;
-  methods.result = result;
-
-  return methods;
-}; // index()
-
-module.exports = returnIndexer;
-
-},{}],7:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### returnQuotedTextExtractor
-
-/**
- *
- * Returns a function that extracts all occurrences of every quoted text
- * between the `lq` and the `rq` characters from its argument. This argument
- * must be of type string.
- *
- * @alias helper#returnQuotedTextExtractor
- * @param {string} [lq='"'] the left quote character.
- * @param {string} [rq='"'] the right quote character.
- * @return {function} that will accept an input string argument and return an
- * array of all substrings that are quoted between `lq` and `rq`.
- * @example
- * var extractQuotedText = returnQuotedTextExtractor();
- * extractQuotedText( 'Raise 2 issues - "fix a bug" & "run tests"' );
- * // -> [ 'fix a bug', 'run tests' ]
- */
-var returnQuotedTextExtractor = function ( lq, rq ) {
-  var // Index variable for *for-loop*
-      i,
-      // Set defaults for left quote, if required.
-      lq1 = ( ( lq && ( typeof lq === 'string' ) ) ? lq : '"' ),
-      // Extracts its length
-      lqLen = lq1.length,
-      // The regular expression is created here.
-      regex = null,
-      // The string containing the regular expression builds here.
-      rgxStr = '',
-      // Set defaults for right quote, if required.
-      rq1 = ( ( rq && ( typeof rq === 'string' ) ) ? rq : lq1 ),
-      // Extract its length.
-      rqLen = rq1.length;
-
-  // Build `rgxStr`
-  for ( i = 0; i < lqLen; i += 1 ) rgxStr += '\\' + lq1.charAt( i );
-  rgxStr += '.*?';
-  for ( i = 0; i < rqLen; i += 1 ) rgxStr += '\\' + rq1.charAt( i );
-  // Create regular expression.
-  regex = new RegExp( rgxStr, 'g' );
-  // Return the extractor function.
-  return ( function ( s ) {
-    if ( !s || ( typeof s !== 'string' ) ) return null;
-    var // Extracted elements are captured here.
-        elements = [],
-        // Extract matches with quotes
-        matches = s.match( regex );
-    if ( !matches || ( matches.length === 0 ) ) return null;
-    // Collect elements after removing the quotes.
-    for ( var k = 0, kmax = matches.length; k < kmax; k += 1 ) {
-      elements.push( matches[ k ].substr( lqLen, matches[ k ].length - ( rqLen + lqLen ) ) );
-    }
-    return ( elements );
-  } );
-}; // returnQuotedTextExtractor()
-
-module.exports = returnQuotedTextExtractor;
-
-},{}],8:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### returnWordsFilter
-
-/**
- *
- * Returns an object containing the following functions: (a) `set()`, which returns
- * a set of mapped words given in the input array `words`. (b) `exclude()` that
- * is suitable for array filtering operations.
- *
- * If the second argument `mappers` is provided as an array of maping functions
- * then these are applied on the input array before converting into a set. A
- * mapper function must accept a string as argument and return a string as the result.
- * Examples of mapper functions are typically **string** functionss of **`wink-nlp-utils`**
- * such as `string.lowerCase()`, `string.stem()` and
- * `string.soundex()`.
- *
- * @alias helper#returnWordsFilter
- * @param {string[]} words that can be filtered using the returned wordsFilter.
- * @param {function[]} [mappers=undefined] optionally used to map each word before creating
- * the wordsFilter.
- * @return {wordsFilter} object containg `set()` and `exclude()` functions for `words`.
- * @example
- * var stopWords = [ 'This', 'That', 'Are', 'Is', 'Was', 'Will', 'a' ];
- * var myFilter = returnWordsFilter( stopWords, [ string.lowerCase ] );
- * [ 'this', 'is', 'a', 'cat' ].filter( myFilter.exclude );
- * // -> [ 'cat' ]
- */
-var returnWordsFilter = function ( words, mappers ) {
-  var mappedWords = words;
-  var givenMappers = mappers || [];
-  givenMappers.forEach( function ( m ) {
-    mappedWords = mappedWords.map( m );
-  } );
-
-  mappedWords = new Set( mappedWords );
-
-  var exclude = function ( t ) {
-    return ( !( mappedWords.has( t ) ) );
-  }; // exclude()
-
-  var set = function () {
-    return mappedWords;
-  }; // set()
-
-  return {
-    set: set,
-    exclude: exclude
-  };
-}; // returnWordsFilter()
-
-module.exports = returnWordsFilter;
-
-},{}],9:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var degrees = [
-  /\bm\.?\s*a\b/i,
-  /\bb\.?\s*a\b/i,
-  /\bb\.?\s*tech\b/i,
-  /\bm\.?\s*tech\b/i,
-  /\bb\.?\s*des\b/i,
-  /\bm\.?\s*des\b/i,
-  /\bm\.?\s*b\.?\s*a\b/i,
-  /\bm\.?\s*c\.?\s*a\b/i,
-  /\bb\.?\s*c\.?\s*a\b/i,
-  /\bl\.?\s*l\.?\s*b\b/i,
-  /\bl\.?\s*l\.?\s*m\b/i,
-  /\bm\.?\s*b\.?\s*b\.?\s*s\b/i,
-  /\bm\.?\s*d\b/i,
-  /\bd\.?\s*m\b/i,
-  /\bm\.?\s*s\b/i,
-  /\bd\.?\s*n\.?\s*b\b/i,
-  /\bd\.?\s*g\.?\s*o\b/i,
-  /\bd\.?\s*l\.?\s*o\b/i,
-  /\bb\.?\s*d\.?\s*s\b/i,
-  /\bb\.?\s*h\.?\s*m\.?\s*s\b/i,
-  /\bb\.?\s*a\.?\s*m\.?\s*s\b/i,
-  /\bf\.?\s*i\.?\s*c\.?\s*s\b/i,
-  /\bm\.?\s*n\.?\s*a\.?\s*m\.?\s*s\b/i,
-  /\bb\.?\s*e\.?\s*m\.?\s*s\b/i,
-  /\bd\.?\s*c\.?\s*h\b/i,
-  /\bm\.?\s*c\.?\s*h\b/i,
-  /\bf\.?\s*r\.?\s*c\.?\s*s\b/i,
-  /\bm\.?\s*r\.?\s*c\.?\s*p\b/i,
-  /\bf\.?\s*i\.?\s*a\.?\s*c\.?\s*m\b/i,
-  /\bf\.?\s*i\.?\s*m\.?\s*s\.?\s*a\b/i,
-  /\bp\.?\s*h\.?\s*d\b/i,
- ];
-
-var titleNames = [ 'mr', 'mrs', 'miss', 'ms', 'master', 'er', 'dr', 'shri', 'shrimati', 'sir' ];
-
-var titles = new RegExp( '^(?:' + titleNames.join( '|' ) + ')$', 'i' );
-
-module.exports = {
-  degrees: degrees,
-  titles: titles
-};
-
-},{}],10:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-/* eslint no-underscore-dangle: "off" */
-var rgx = Object.create( null );
-// Remove repeating characters.
-rgx.repeatingChars = /([^c])\1/g;
-// Drop first character from character pairs, if found in the beginning.
-rgx.kngnPairs = /^(kn|gn|pn|ae|wr)/;
-// Drop vowels that are not found in the beginning.
-rgx.__vowels = /(?!^)[aeiou]/g;
-// Replaces `ough` in the end by 'f'
-rgx.ough = /ough$/;
-// Replace following 3 instances of `dg` by `j`.
-rgx.dge = /dge/g;
-rgx.dgi = /dgi/g;
-rgx.dgy = /dgy/g;
-// Replace `sch` by `sk`.
-rgx.sch = /sch/g;
-// Drop `c` in `sci, sce, scy`.
-rgx.sci = /sci/g;
-rgx.sce = /sce/g;
-rgx.scy = /scy/g;
-// Make 'sh' out of `tio & tia`.
-rgx.tio = /tio/g;
-rgx.tia = /tia/g;
-// `t` is silent in `tch`.
-rgx.tch = /tch/g;
-// Drop `b` in the end if preceeded by `m`.
-rgx.mb_ = /mb$/;
-// These are pronounced as `k`.
-rgx.cq = /cq/g;
-rgx.ck = /ck/g;
-// Here `c` sounds like `s`
-rgx.ce = /ce/g;
-rgx.ci = /ci/g;
-rgx.cy = /cy/g;
-// And this `f`.
-rgx.ph = /ph/g;
-// The `sh` finally replaced by `x`.
-rgx.sh = /sh|sio|sia/g;
-// This is open rgx - TODO: need to finalize.
-rgx.vrnotvy = /([aeiou])(r)([^aeiouy])/g;
-// `th` sounds like theta - make it 0.
-rgx.th = /th/g;
-// `c` sounds like `k` except when it is followed by `h`.
-rgx.cnoth = /(c)([^h])/g;
-// Even `q` sounds like `k`.
-rgx.q = /q/g;
-// The first `x` sounds like `s`.
-rgx._x = /^x/;
-// Otherwise `x` is more like `ks`.
-rgx.x = /x/g;
-// Drop `y` if not followed by a vowel or appears in the end.
-rgx.ynotv = /(y)([^aeiou])/g;
-rgx.y_ = /y$/;
-// `z` is `s`.
-rgx.z = /z/g;
-
-// Export rgx.
-module.exports = rgx;
-
-},{}],11:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### amplifyNotElision
-/**
- *
- * Amplifies the not elision by converting it into not; for example `isn't`
- * becomes `is not`.
- *
- * @alias string#amplifyNotElision
- * @param {string} str the input string.
- * @return {string} input string after not elision amplification.
- * @example
- * amplifyNotElision( "someone's wallet, isn't it?" );
- * // -> "someone's wallet, is not it?"
- */
-var amplifyNotElision = function ( str ) {
-  return str.replace( rgx.notElision, '$1 not' );
-}; // amplifyNotElision()
-
-module.exports = amplifyNotElision;
-
-},{"./util_regexes.js":45}],12:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### bagOfNGrams
-/**
- *
- * Generates the bag of ngrams of `size` from the input string. The
- * default size is 2, which means it will generate bag of bigrams by default. It
- * also has an alias **`bong()`**.
- *
- * @alias string#bagOfNGrams
- * @param {string} str the input string.
- * @param {number} [size=2] ngram size.
- * @param {function} [ifn=undefined] a function to build index; it is called for
- * every **unique occurrence of ngram** of `str`; and it receives the ngram and the `idx`
- * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
- * may be used as `ifn`. If `undefined` then index is not built.
- * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
- * function.
- * @return {object} bag of ngrams of `size` from `str`.
- * @example
- * bagOfNGrams( 'mama' );
- * // -> { ma: 2, am: 1 }
- * bong( 'mamma' );
- * // -> { ma: 2, am: 1, mm: 1 }
- */
-var bagOfNGrams = function ( str, size, ifn, idx ) {
-  var ng = ( size || 2 ),
-      ngBOW = Object.create( null ),
-      tg;
-  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
-    tg = str.slice( i, i + ng );
-    if ( tg.length === ng ) {
-      // Call `ifn` iff its defined and `tg` is appearing for the first time;
-      // this avoids multiple calls to `ifn`. Strategy applies to `song()`,
-      // and `bow()`.
-      if ( ( typeof ifn === 'function' ) && !ngBOW[ tg ] ) {
-          ifn( tg, idx );
-      }
-      // Now define, if required and then update counts.
-      ngBOW[ tg ] = 1 + ( ngBOW[ tg ] || 0 );
-    }
-  }
-  return ( ngBOW );
-}; // bong()
-
-module.exports = bagOfNGrams;
-
-},{}],13:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var helpers = require( 'wink-helpers' );
-var returnQuotedTextExtractor = require( './helper-return-quoted-text-extractor.js' );
-var extractQuotedText = returnQuotedTextExtractor( '[', ']' );
-// ## string
-
-// ### composeCorpus
-/**
- *
- * Generates all possible sentences from the input argument string.
- * The string s must follow a special syntax as illustrated in the
- * example below:<br/>
- * `'[I] [am having|have] [a] [problem|question]'`<br/>
- *
- * Each phrase must be quoted between `[ ]` and each possible option of phrases
- * (if any) must be separated by a `|` character. The corpus is composed by
- * computing the cartesian product of all the phrases.
- *
- * @alias string#composeCorpus
- * @param {string} str the input string.
- * @return {string[]} of all possible sentences.
- * @example
- * composeCorpus( '[I] [am having|have] [a] [problem|question]' );
- * // -> [ 'I am having a problem',
- * //      'I am having a question',
- * //      'I have a problem',
- * //      'I have a question' ]
- */
-var composeCorpus = function ( str ) {
-  if ( !str || ( typeof str !== 'string' ) ) return [];
-
-  var quotedTextElems = extractQuotedText( str );
-  var corpus = [];
-  var finalCorpus = [];
-
-  if ( !quotedTextElems ) return [];
-  quotedTextElems.forEach( function ( e ) {
-    corpus.push( e.split( '|' ) );
-  } );
-
-  helpers.array.product( corpus ).forEach( function ( e ) {
-    finalCorpus.push( e.join( ' ' ) );
-  } );
-  return ( finalCorpus );
-}; // composeCorpus()
-
-module.exports = composeCorpus;
-
-},{"./helper-return-quoted-text-extractor.js":7,"wink-helpers":4}],14:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### edgeNGrams
-/**
- *
- * Generates the edge ngrams from the input string.
- *
- * @alias string#edgeNGrams
- * @param {string} str the input string.
- * @param {number} [min=2] size of ngram generated.
- * @param {number} [max=8] size of ngram is generated.
- * @param {number} [delta=2] edge ngrams are generated in increments of this value.
- * @param {function} [ifn=undefined] a function to build index; it is called for
- * every edge ngram of `str`; and it receives the edge ngram and the `idx`
- * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
- * may be used as `ifn`. If `undefined` then index is not built.
- * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
- * function.
- * @return {string[]} of edge ngrams.
- * @example
- * edgeNGrams( 'decisively' );
- * // -> [ 'de', 'deci', 'decisi', 'decisive' ]
- * edgeNGrams( 'decisively', 8, 10, 1 );
- * // -> [ 'decisive', 'decisivel', 'decisively' ]
- */
-var edgeNGrams = function ( str, min, max, delta, ifn, idx ) {
-  var dlta = ( delta || 2 ),
-      eg,
-      egs = [],
-      imax = Math.min( ( max || 8 ), str.length ) + 1,
-      start = ( min || 2 );
-
-  // Generate edge ngrams
-  for ( var i = start; i < imax; i += dlta ) {
-    eg = str.slice( 0, i );
-    egs.push( eg );
-    if ( typeof ifn === 'function' ) {
-        ifn( eg, idx );
-    }
-  }
-  return ( egs );
-}; // edgeNGrams()
-
-module.exports = edgeNGrams;
-
-},{}],15:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-var ncrgx = require( './name_cleaner_regexes.js' );
-
-// ## string
-
-// ### extractPersonsName
-/**
- *
- * Attempts to extract person's name from input string.
- * It assmues the following name format:<br/>
- * `[<salutations>] <name part as FN [MN] [LN]> [<degrees>]`<br/>
- * Entities in square brackets are optional.
- *
- * @alias string#extractPersonsName
- * @param {string} str the input string.
- * @return {string} extracted name.
- * @example
- * extractPersonsName( 'Dr. Sarah Connor M. Tech., PhD. - AI' );
- * // -> 'Sarah Connor'
- */
-var extractPersonsName = function ( str ) {
-  // Remove Degrees by making the list of indexes of each degree and subsequently
-  // finding the minimum and slicing from there!
-  var indexes = ncrgx.degrees.map( function ( r ) {
-    var m = r.exec( str );
-    return ( m ) ? m.index : 999999;
-  } );
-  var sp = Math.min.apply( null, indexes );
-
-  // Generate an Array of Every Elelemnt of Name (e.g. title, first name,
-  // sir name, honours, etc)
-  var aeen = str.slice( 0, sp ).replace( rgx.notAlpha, ' ').replace( rgx.spaces, ' ').trim().split(' ');
-  // Remove titles from the beginning.
-  while ( aeen.length && ncrgx.titles.test( aeen[0] ) ) aeen.shift();
-  return aeen.join(' ');
-}; // extractPersonsName()
-
-module.exports = extractPersonsName;
-
-},{"./name_cleaner_regexes.js":9,"./util_regexes.js":45}],16:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-var trim = require( './string-trim.js' );
-// ## string
-
-// ### extractRunOfCapitalWords
-/**
- *
- * Extracts the array of text appearing as Title Case or in ALL CAPS from the
- * input string.
- *
- * @alias string#extractRunOfCapitalWords
- * @param {string} str the input string.
- * @return {string[]} of text appearing in Title Case or in ALL CAPS; if no such
- * text is found then `null` is returned.
- * @example
- * extractRunOfCapitalWords( 'In The Terminator, Sarah Connor is in Los Angeles' );
- * // -> [ 'In The Terminator', 'Sarah Connor', 'Los Angeles' ]
- */
-var extractRunOfCapitalWords = function ( str ) {
-  var m = str.match( rgx.rocWords );
-  return ( ( m ) ? m.map( trim ) : m );
-}; // extractRunOfCapitalWords()
-
-module.exports = extractRunOfCapitalWords;
-
-},{"./string-trim.js":34,"./util_regexes.js":45}],17:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### lowerCase
-/**
- *
- * Converts the input string to lower case.
- *
- * @alias string#lowerCase
- * @param {string} str the input string.
- * @return {string} input string in lower case.
- * @example
- * lowerCase( 'Lower Case' );
- * // -> 'lower case'
- */
-var lowerCase = function ( str ) {
-  return ( str.toLowerCase() );
-}; // lowerCase()
-
-module.exports = lowerCase;
-
-},{}],18:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### marker
-/**
- *
- * Generates `marker` of the input string; it is defined as 1-gram, sorted
- * and joined back as a string again. Marker is a quick and aggressive way
- * to detect similarity between short strings. Its aggression may lead to more
- * false positives such as `Meter` and `Metre` or `no melon` and `no lemon`.
- *
- * @alias string#marker
- * @param {string} str the input string.
- * @return {string} the marker.
- * @example
- * marker( 'the quick brown fox jumps over the lazy dog' );
- * // -> ' abcdefghijklmnopqrstuvwxyz'
- */
-var marker = function ( str ) {
-  var uniqChars = Object.create( null );
-  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
-    uniqChars[ str[ i ] ] = true;
-  }
-  return ( Object.keys( uniqChars ).sort().join('') );
-}; // marker()
-
-module.exports = marker;
-
-},{}],19:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### ngram
-/**
- *
- * Generates an array of ngrams of a specified size from the input string. The
- * default size is 2, which means it will generate bigrams by default.
- *
- * @alias string#ngram
- * @param {string} str the input string.
- * @param {number} [size=2] ngram's size.
- * @return {string[]} ngrams of `size` from `str`.
- * @example
- * ngram( 'FRANCE' );
- * // -> [ 'FR', 'RA', 'AN', 'NC', 'CE' ]
- * ngram( 'FRENCH' );
- * // -> [ 'FR', 'RE', 'EN', 'NC', 'CH' ]
- * ngram( 'FRANCE', 3 );
- * // -> [ 'FRA', 'RAN', 'ANC', 'NCE' ]
- */
-var ngram = function ( str, size ) {
-  var ng = ( size || 2 ),
-      ngramz = [],
-      tg;
-  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
-    tg = str.slice( i, i + ng );
-    if ( tg.length === ng ) ngramz.push( tg );
-  }
-  return ( ngramz );
-}; // ngram()
-
-module.exports = ngram;
-
-},{}],20:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var phnrgx = require( './phonetize_regexes.js' );
-/* eslint no-underscore-dangle: "off" */
-
-// ## string
-
-// ### phonetize
-/**
- *
- * Phonetizes the input string using an algorithmic adaptation of Metaphone; It
- * is not an exact implementation of Metaphone.
- *
- * @alias string#phonetize
- * @param {string} word the input word.
- * @return {string} phonetic code of `word`.
- * @example
- * phonetize( 'perspective' );
- * // -> 'prspktv'
- * phonetize( 'phenomenon' );
- * // -> 'fnmnn'
- */
-var phonetize = function ( word ) {
-  var p = word.toLowerCase();
-  // Remove repeating letters.
-  p = p.replace( phnrgx.repeatingChars, '$1');
-  // Drop first character of `kgknPairs`.
-  if ( phnrgx.kngnPairs.test( p ) ) {
-    p = p.substr( 1, p.length - 1 );
-  }
-  // Run Regex Express now!
-  p = p
-      // Change `ough` in the end as `f`,
-      .replace( phnrgx.ough, 'f' )
-      // Change `dg` to `j`, in `dge, dgi, dgy`.
-      .replace( phnrgx.dge, 'je' )
-      .replace( phnrgx.dgi, 'ji' )
-      .replace( phnrgx.dgy, 'jy' )
-      // Change `c` to `k` in `sch`
-      .replace( phnrgx.sch, 'sk' )
-      // Drop `c` in `sci, sce, scy`.
-      .replace( phnrgx.sci, 'si' )
-      .replace( phnrgx.sce, 'se' )
-      .replace( phnrgx.scy, 'sy' )
-      // Drop `t` if it appears as `tch`.
-      .replace( phnrgx.tch, 'ch' )
-      // Replace `tio & tia` by `sh`.
-      .replace( phnrgx.tio, 'sh' )
-      .replace( phnrgx.tia, 'sh' )
-      // Drop `b` if it appears as `mb` in the end.
-      .replace( phnrgx.mb_, 'm' )
-      // Drop `r` if it preceeds a vowel and not followed by a vowel or `y`
-      // .replace( rgx.vrnotvy, '$1$3' )
-      // Replace `c` by `s` in `ce, ci, cy`.
-      .replace( phnrgx.ce, 'se' )
-      .replace( phnrgx.ci, 'si' )
-      .replace( phnrgx.cy, 'sy' )
-      // Replace `cq` by `q`.
-      .replace( phnrgx.cq, 'q' )
-      // Replace `ck` by `k`.
-      .replace( phnrgx.ck, 'k' )
-      // Replace `ph` by `f`.
-      .replace( phnrgx.ph, 'f' )
-      // Replace `th` by `0` (theta look alike!).
-      .replace( phnrgx.th, '0' )
-      // Replace `c` by `k` if it is not followed by `h`.
-      .replace( phnrgx.cnoth, 'k$2' )
-      // Replace `q` by `k`.
-      .replace( phnrgx.q, 'k' )
-      // Replace `x` by `s` if it appears in the beginning.
-      .replace( phnrgx._x, 's' )
-      // Other wise replace `x` by `ks`.
-      .replace( phnrgx.x, 'ks' )
-      // Replace `sh, sia, sio` by `x`. Needs to be done post `x` processing!
-      .replace( phnrgx.sh, 'x' )
-      // Drop `y` if it is now followed by a **vowel**.
-      .replace( phnrgx.ynotv, '$2' )
-      .replace( phnrgx.y_, '' )
-      // Replace `z` by `s`.
-      .replace( phnrgx.z, 's' )
-      // Drop all **vowels** excluding the first one.
-      .replace( phnrgx.__vowels, '' );
-
-      return ( p );
-}; // phonetize()
-
-module.exports = phonetize;
-
-},{"./phonetize_regexes.js":10}],21:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### removeElisions
-/**
- *
- * Removes basic elisions found in the input string. Typical example of elisions
- * are `it's, let's, where's, I'd, I'm, I'll, I've, and Isn't` etc. Note it retains
- * apostrophe used to indicate possession.
- *
- * @alias string#removeElisions
- * @param {string} str the input string.
- * @return {string} input string after removal of elisions.
- * @example
- * removeElisions( "someone's wallet, isn't it?" );
- * // -> "someone's wallet, is it?"
- */
-var removeElisions = function ( str ) {
-  return ( str
-            .replace( rgx.elisionsSpl, '$2' )
-            .replace( rgx.elisions1, '$1' )
-            .replace( rgx.elisions2, '$1' )
-         );
-}; // removeElisions()
-
-module.exports = removeElisions;
-
-},{"./util_regexes.js":45}],22:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### removeExtraSpaces
-/**
- *
- * Removes leading, trailing and any extra in-between whitespaces from the input
- * string.
- *
- * @alias string#removeExtraSpaces
- * @param {string} str the input string.
- * @return {string} input string after removal of leading, trailing and extra
- * whitespaces.
- * @example
- * removeExtraSpaces( '   Padded   Text    ' );
- * // -> 'Padded Text'
- */
-var removeExtraSpaces = function ( str ) {
-  return ( str
-            .trim()
-            .replace( rgx.spaces, ' ')
-         );
-}; // removeExtraSpaces()
-
-module.exports = removeExtraSpaces;
-
-},{"./util_regexes.js":45}],23:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### removeHTMLTags
-/**
- *
- * Removes each HTML tag by replacing it with a whitespace.
- *
- * Extra spaces, if required, may be removed using [string.removeExtraSpaces](#stringremoveextraspaces)
- * function.
- *
- * @alias string#removeHTMLTags
- * @param {string} str the input string.
- * @return {string} input string after removal of HTML tags.
- * @example
- * removeHTMLTags( '<p>Vive la France&nbsp;&#160;!</p>' );
- * // -> ' Vive la France  ! '
- */
-var removeHTMLTags = function ( str ) {
-  return ( str
-            .replace( rgx.htmlTags, ' ' )
-            .replace( rgx.htmlEscSeq1, ' ' )
-            .replace( rgx.htmlEscSeq2, ' ' )
-         );
-}; // removeHTMLTags()
-
-module.exports = removeHTMLTags;
-
-},{"./util_regexes.js":45}],24:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### removePunctuations
-/**
- *
- * Removes each punctuation mark by replacing it with a whitespace. It looks for
- * the following punctuations — `.,;!?:"!'... - () [] {}`.
- *
- * Extra spaces, if required, may be removed using [string.removeExtraSpaces](#stringremoveextraspaces)
- * function.
- *
- * @alias string#removePunctuations
- * @param {string} str the input string.
- * @return {string} input string after removal of punctuations.
- * @example
- * removePunctuations( 'Punctuations like "\'\',;!?:"!... are removed' );
- * // -> 'Punctuations like               are removed'
- */
-var removePunctuations = function ( str ) {
-  return str.replace( rgx.punctuations, ' ' );
-}; // removePunctuations()
-
-module.exports = removePunctuations;
-
-},{"./util_regexes.js":45}],25:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### removeSplChars
-/**
- *
- * Removes each special character by replacing it with a whitespace. It looks for
- * the following special characters — `~@#%^*+=`.
- *
- * Extra spaces, if required, may be removed using [string.removeExtraSpaces](#stringremoveextraspaces)
- * function.
- *
- * @alias string#removeSplChars
- * @param {string} str the input string.
- * @return {string} input string after removal of special characters.
- * @example
- * removeSplChars( '4 + 4*2 = 12' );
- * // -> '4   4 2   12'
- */
-var removeSplChars = function ( str ) {
-  return str.replace( rgx.splChars, ' ' );
-}; // removeSplChars()
-
-module.exports = removeSplChars;
-
-},{"./util_regexes.js":45}],26:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### retainAlphaNums
-/**
- *
- * Retains only apha, numerals, and removes all other characters from
- * the input string, including leading, trailing and extra in-between
- * whitespaces.
- *
- * @alias string#retainAlphaNums
- * @param {string} str the input string.
- * @return {string} input string after removal of non-alphanumeric characters,
- * leading, trailing and extra whitespaces.
- * @example
- * retainAlphaNums( ' This, text here, has  (other) chars_! ' );
- * // -> 'This text here has other chars'
- */
-var retainAlphaNums = function ( str ) {
-  return ( str
-            .replace( rgx.notAlphaNumeric, ' ')
-            .replace( rgx.spaces, ' ')
-            .trim()
-          );
-}; // retainAlphaNums()
-
-module.exports = retainAlphaNums;
-
-},{"./util_regexes.js":45}],27:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-// Abbreviations with `.` but are never are EOS.
-const abbrvNoEOS = Object.create( null );
-abbrvNoEOS[ 'mr.' ] = true;
-abbrvNoEOS[ 'mrs.' ] = true;
-abbrvNoEOS[ 'ms.' ] = true;
-abbrvNoEOS[ 'er.' ] = true;
-abbrvNoEOS[ 'dr.' ] = true;
-abbrvNoEOS[ 'miss.' ] = true;
-abbrvNoEOS[ 'shri.' ] = true;
-abbrvNoEOS[ 'smt.' ] = true;
-abbrvNoEOS[ 'i.e.' ] = true;
-abbrvNoEOS[ 'ie.' ] = true;
-abbrvNoEOS[ 'e.g.' ] = true;
-abbrvNoEOS[ 'eg.' ] = true;
-abbrvNoEOS[ 'viz.' ] = true;
-abbrvNoEOS[ 'pvt.' ] = true;
-// et al.
-abbrvNoEOS[ 'et.' ] = true;
-abbrvNoEOS[ 'al.' ] = true;
-// Mount Kailash!
-abbrvNoEOS[ 'mt.' ] = true;
-// Pages!
-abbrvNoEOS[ 'pp.' ] = true;
-
-const abbrvMayBeEOS = Object.create( null );
-abbrvMayBeEOS[ 'inc.' ] = true;
-abbrvMayBeEOS[ 'ltd.' ] = true;
-abbrvMayBeEOS[ 'al.' ] = true;
-// Regex to test potential End-Of-Sentence.
-const rgxPotentialEOS = /\.$|\!$|\?$/;
-// Regex to test special cases of "I" at eos.
-const rgxSplI = /i\?$|i\!$/;
-// Regex to test first char as alpha only
-const rgxAlphaAt0 = /^[^a-z]/i;
-
-// ## string
-
-// ### sentences
-/**
- *
- * Detects the sentence boundaries in the input `paragraph` and splits it into
- * an array of sentence(s).
- *
- * @alias string#sentences
- * @param {string} paragraph the input string.
- * @return {string[]} of sentences.
- * @example
- * sentences( 'AI Inc. is focussing on AI. I work for AI Inc. My mail is r2d2@yahoo.com' );
- * // -> [ 'AI Inc. is focussing on AI.',
- * //      'I work for AI Inc.',
- * //      'My mail is r2d2@yahoo.com' ]
- *
- * sentences( 'U.S.A is my birth place. I was born on 06.12.1924. I climbed Mt. Everest.' );
- * // -> [ 'U.S.A is my birth place.',
- * //      'I was born on 06.12.1924.',
- * //      'I climbed Mt. Everest.' ]
- */
-var punkt = function ( paragraph ) {
-  // The basic idea is to split the paragraph on `spaces` and thereafter
-  // examine each word ending with an EOS punctuation for a possible EOS.
-
-  // Split on **space** to obtain all the `tokens` in the `para`.
-  const paraTokens = paragraph.split( ' ' );
-  var sentenceTokens = [];
-  var sentences = [];
-
-  for ( let k = 0; k < paraTokens.length; k += 1 ) {
-    // A para token.
-    const pt = paraTokens[ k ];
-    // A lower cased para token.
-    const lcpt = pt.toLowerCase();
-    if ( ( rgxPotentialEOS.test( pt ) ) && !abbrvNoEOS[ lcpt ] && ( pt.length !== 2 || rgxAlphaAt0.test( pt ) || rgxSplI.test( lcpt ) ) ) {
-      // Next para token that is non-blank.
-      let nextpt;
-      // Append this token to the current sentence tokens.
-      sentenceTokens.push( pt );
-      // If the current token is one of the abbreviations that may also mean EOS.
-      if ( abbrvMayBeEOS[ lcpt ] ) {
-        for ( let j = k + 1; j < paraTokens.length && !nextpt; j += 1 ) {
-          nextpt = paraTokens[ j ];
-        }
-      }
-      // If no next para token or if present then starts from a Cap Letter then
-      // only complete sentence and start a new one!
-      if ( nextpt === undefined || ( /^[A-Z]/ ).test( nextpt ) ) {
-        sentences.push( sentenceTokens.join( ' ' ) );
-        sentenceTokens = [];
-      }
-    } else sentenceTokens.push( pt );
-  }
-
-  if ( sentenceTokens.length > 0 ) sentences.push( sentenceTokens.join( ' ' ) );
-
-  return sentences;
-}; // punkt()
-
-module.exports = punkt;
-
-},{}],28:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### setOfChars
-/**
- *
- * Creates a set of chars from the input string `s`. This is useful
- * in even more aggressive string matching using Jaccard or Tversky compared to
- * `marker()`. It also has an alias **`soc()`**.
- *
- * @alias string#setOfChars
- * @param {string} str the input string.
- * @param {function} [ifn=undefined] a function to build index; it receives the first
- * character of `str` and the `idx` as input arguments. The `build()` function of
- * [helper.returnIndexer](#helperreturnindexer) may be used as `ifn`. If `undefined`
- * then index is not built.
- * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
- * function.
- * @return {string} the soc.
- * @example
- * setOfChars( 'the quick brown fox jumps over the lazy dog' );
- * // -> ' abcdefghijklmnopqrstuvwxyz'
- */
-var setOfChars = function ( str, ifn, idx ) {
-  var cset = new Set( str );
-  if ( typeof ifn === 'function' ) {
-      ifn( str[ 0 ], idx );
-  }
-  return ( cset );
-}; // soc()
-
-module.exports = setOfChars;
-
-},{}],29:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### setOfNGrams
-/**
- *
- * Generates the set of ngrams of `size` from the input string. The
- * default size is 2, which means it will generate set of bigrams by default.
- * It also has an alias **`song()`**.
- *
- * @alias string#setOfNGrams
- * @param {string} str the input string.
- * @param {number} [size=2] ngram size.
- * @param {function} [ifn=undefined] a function to build index; it is called for
- * every **unique occurrence of ngram** of `str`; and it receives the ngram and the `idx`
- * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
- * may be used as `ifn`. If `undefined` then index is not built.
- * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
- * function.
- * @return {set} of ngrams of `size` of `str`.
- * @example
- * setOfNGrams( 'mama' );
- * // -> Set { 'ma', 'am' }
- * song( 'mamma' );
- * // -> Set { 'ma', 'am', 'mm' }
- */
-var setOfNGrams = function ( str, size, ifn, idx ) {
-  var ng = ( size || 2 ),
-      ngSet = new Set(),
-      tg;
-  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
-    tg = str.slice( i, i + ng );
-    if ( tg.length === ng ) {
-      if ( ( typeof ifn === 'function' ) && !ngSet.has( tg ) ) {
-          ifn( tg, idx );
-      }
-      ngSet.add( tg );
-    }
-  }
-  return ( ngSet );
-}; // song()
-
-module.exports = setOfNGrams;
-
-},{}],30:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var sndx = require( 'wink-distance/src/soundex.js' );
-
-// ## string
-
-// ### soundex
-/**
- *
- * Produces the soundex code from the input `word`.
- *
- * @alias string#soundex
- * @param {string} word the input word.
- * @param {number} [maxLength=4] of soundex code to be returned.
- * @return {string} soundex code of `word`.
- * @example
- * soundex( 'Burroughs' );
- * // -> 'B620'
- * soundex( 'Burrows' );
- * // -> 'B620'
- */
-var soundex = function ( word, maxLength ) {
-  return sndx( word, maxLength );
-}; // soundex()
-
-module.exports = soundex;
-
-},{"wink-distance/src/soundex.js":3}],31:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### splitElisions
-/**
- *
- * Splits basic elisions found in the input string. Typical example of elisions
- * are `it's, let's, where's, I'd, I'm, I'll, I've, and Isn't` etc. Note it does
- * not touch apostrophe used to indicate possession.
- *
- * @alias string#splitElisions
- * @param {string} str the input string.
- * @return {string} input string after splitting of elisions.
- * @example
- * splitElisions( "someone's wallet, isn't it?" );
- * // -> "someone's wallet, is n't it?"
- */
-var splitElisions = function ( str ) {
-  return ( str
-            .replace( rgx.elisionsSpl, '$2 $3' )
-            .replace( rgx.elisions1, '$1 $2' )
-            .replace( rgx.elisions2, '$1 $2' )
-         );
-}; // splitElisions()
-
-module.exports = splitElisions;
-
-},{"./util_regexes.js":45}],32:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var winkTokenize = require( 'wink-tokenizer' )().tokenize;
-
-// ## string
-
-// ### tokenize
-/**
- *
- * Tokenizes the input `sentence` according to the value of `detailed` flag.
- * Any occurance of `...` in the `sentence` is
- * converted to ellipses. In `detailed = true` mode, it
- * tags every token with its type; the supported tags are currency, email,
- * emoji, emoticon, hashtag, number, ordinal, punctuation, quoted_phrase, symbol,
- * time, mention, url, and word.
- *
- * @alias string#tokenize
- * @param {string} sentence the input string.
- * @param {boolean} [detailed=false] if true, each token is a object cotaining
- * `value` and `tag` of each token; otherwise each token is a string. It's default
- * value of **false** ensures compatibility with previous version.
- * @return {(string[]|object[])} an array of strings if `detailed` is false otherwise
- * an array of objects.
- * @example
- * tokenize( "someone's wallet, isn't it? I'll return!" );
- * // -> [ 'someone', '\'s', 'wallet', ',', 'is', 'n\'t', 'it', '?',
- * //      'I', '\'ll', 'return', '!' ]
- *
- * tokenize( 'For details on wink, check out http://winkjs.org/ URL!', true );
- * // -> [ { value: 'For', tag: 'word' },
- * //      { value: 'details', tag: 'word' },
- * //      { value: 'on', tag: 'word' },
- * //      { value: 'wink', tag: 'word' },
- * //      { value: ',', tag: 'punctuation' },
- * //      { value: 'check', tag: 'word' },
- * //      { value: 'out', tag: 'word' },
- * //      { value: 'http://winkjs.org/', tag: 'url' },
- * //      { value: 'URL', tag: 'word' },
- * //      { value: '!', tag: 'punctuation' } ]
- */
-var tokenize = function ( sentence, detailed ) {
-  var tokens = winkTokenize( sentence.replace( '...', '…' ) );
-  var i;
-  if ( !detailed ) {
-    for ( i = 0; i < tokens.length; i += 1 ) tokens[ i ] = tokens[ i ].value;
-  }
-
-  return tokens;
-}; // tokenize()
-
-module.exports = tokenize;
-
-},{"wink-tokenizer":49}],33:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var removeElisions = require( './string-remove-elisions.js' );
-var amplifyNotElision = require( './string-amplify-not-elision.js' );
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### tokenize0
-/**
- *
- * Tokenizes by splitting the input string on **non-words**. This means tokens would
- * consists of only alphas, numerals and underscores; all other characters will
- * be stripped as they are treated as separators. It also removes all elisions;
- * however negations are retained and amplified.
- *
- * @alias string#tokenize0
- * @param {string} str the input string.
- * @return {string[]} of tokens.
- * @example
- * tokenize0( "someone's wallet, isn't it?" );
- * // -> [ 'someone', 's', 'wallet', 'is', 'not', 'it' ]
- */
-var tokenize0 = function ( str ) {
-  var tokens = removeElisions( amplifyNotElision( str ) )
-                .replace( rgx.cannot, '$1 $2' )
-                .split( rgx.nonWords );
-  // Check the 0th and last element of array for empty string because if
-  // fisrt/last characters are non-words then these will be empty stings!
-  if ( tokens[ 0 ] === '' ) tokens.shift();
-  if ( tokens[ tokens.length - 1 ] === '' ) tokens.pop();
-  return tokens;
-}; // tokenize0()
-
-module.exports = tokenize0;
-
-},{"./string-amplify-not-elision.js":11,"./string-remove-elisions.js":21,"./util_regexes.js":45}],34:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### trim
-/**
- *
- * Trims leading and trailing whitespaces from the input string.
- *
- * @alias string#trim
- * @param {string} str the input string.
- * @return {string} input string with leading & trailing whitespaces removed.
- * @example
- * trim( '  Padded   ' );
- * // -> 'Padded'
- */
-var trim = function ( str ) {
-  return ( str.trim() );
-}; // trim()
-
-module.exports = trim;
-
-},{}],35:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### upperCase
-/**
- *
- * Converts the input string to upper case.
- *
- * @alias string#upperCase
- * @param {string} str the input string.
- * @return {string} input string in upper case.
- * @example
- * upperCase( 'Upper Case' );
- * // -> 'UPPER CASE'
- */
-var upperCase = function ( str ) {
-  return ( str.toUpperCase() );
-}; // upperCase()
-
-module.exports = upperCase;
-
-},{}],36:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## tokens
-
-// ### appendBigrams
-/**
- *
- * Generates bigrams from the input tokens and appends them to the input tokens.
- *
- * @alias tokens#appendBigrams
- * @param {string[]} tokens the input tokens.
- * @return {string[]} the input tokens appended with their bigrams.
- * @example
- * appendBigrams( [ 'he', 'acted', 'decisively', 'today' ] );
- * // -> [ 'he',
- * //      'acted',
- * //      'decisively',
- * //      'today',
- * //      'he_acted',
- * //      'acted_decisively',
- * //      'decisively_today' ]
- */
-var appendBigrams = function ( tokens ) {
-  var i, imax;
-  for ( i = 0, imax = tokens.length - 1; i < imax; i += 1 ) {
-    tokens.push( tokens[ i ] + '_' + tokens[ i + 1 ] );
-  }
-  return tokens;
-}; // appendBigrams()
-
-module.exports = appendBigrams;
-
-},{}],37:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## tokens
-
-// ### bigrams
-/**
- *
- * Generates bigrams from the input tokens.
- *
- * @alias tokens#bigrams
- * @param {string[]} tokens the input tokens.
- * @return {string[]} the bigrams.
- * @example
- * bigrams( [ 'he', 'acted', 'decisively', 'today' ] );
- * // -> [ [ 'he', 'acted' ],
- * //      [ 'acted', 'decisively' ],
- * //      [ 'decisively', 'today' ] ]
- */
-var bigrams = function ( tokens ) {
-  // Bigrams will be stored here.
-  var bgs = [];
-  // Helper variables.
-  var i, imax;
-  // Create bigrams.
-  for ( i = 0, imax = tokens.length - 1; i < imax; i += 1 ) {
-    bgs.push( [ tokens[ i ], tokens[ i + 1 ] ] );
-  }
-  return bgs;
-}; // bigrams()
-
-module.exports = bigrams;
-
-},{}],38:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### bagOfWords
-/**
- *
- * Generates the bag of words from the input string. By default it
- * uses `word count` as it's frequency; but if `logCounts` parameter is set to true then
- * it will use `log2( word counts + 1 )` as it's frequency. It also has an alias **`bow()`**.
- *
- * @alias tokens#bagOfWords
- * @param {string[]} tokens the input tokens.
- * @param {number} [logCounts=false] a true value flags the use of `log2( word count + 1 )`
- * instead of just `word count` as frequency.
- * @param {function} [ifn=undefined] a function to build index; it is called for
- * every **unique occurrence of word** in `tokens`; and it receives the word and the `idx`
- * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
- * may be used as `ifn`. If `undefined` then index is not built.
- * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
- * function.
- * @return {object} bag of words from tokens.
- * @example
- * bagOfWords( [ 'rain', 'rain', 'go', 'away' ] );
- * // -> { rain: 2, go: 1, away: 1 }
- * bow( [ 'rain', 'rain', 'go', 'away' ], true );
- * // -> { rain: 1.584962500721156, go: 1, away: 1 }
- */
-var bagOfWords = function ( tokens, logCounts, ifn, idx ) {
-  var bow1 = Object.create( null ),
-      i, imax,
-      token,
-      words;
-  for ( i = 0, imax = tokens.length; i < imax; i += 1 ) {
-    token = tokens[ i ];
-    if ( ( typeof ifn === 'function' ) && !bow1[ token ] ) {
-        ifn( token, idx );
-    }
-    bow1[ token ] = 1 + ( bow1[ token ] || 0 );
-  }
-  if ( !logCounts ) return ( bow1 );
-  words = Object.keys( bow1 );
-  for ( i = 0, imax = words.length; i < imax; i += 1 ) {
-    // Add `1` to ensure non-zero count! (Note: log2(1) is 0)
-    bow1[ words[ i ] ] = Math.log2( bow1[ words[ i ] ] + 1 );
-  }
-  return ( bow1 );
-}; // bow()
-
-module.exports = bagOfWords;
-
-},{}],39:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var stringPhonetize = require( './string-phonetize.js' );
-
-// ## tokens
-
-// ### phonetize
-/**
- *
- * Phonetizes input tokens using using an algorithmic adaptation of Metaphone.
- *
- * @alias tokens#phonetize
- * @param {string[]} tokens the input tokens.
- * @return {string[]} phonetized tokens.
- * @example
- * phonetize( [ 'he', 'acted', 'decisively', 'today' ] );
- * // -> [ 'h', 'aktd', 'dssvl', 'td' ]
- */
-var phonetize = function ( tokens ) {
-  return tokens.map( stringPhonetize );
-}; // phonetize()
-
-module.exports = phonetize;
-
-},{"./string-phonetize.js":20}],40:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = require( './util_regexes.js' );
-
-// ## string
-
-// ### propagateNegations
-/**
- *
- * It looks for negation tokens in the input array of tokens and propagates
- * negation to subsequent `upto` tokens by prefixing them by a `!`. It is useful
- * in handling text containing negations during tasks like similarity detection,
- * classification or search.
- *
- * @alias tokens#propagateNegations
- * @param {string[]} tokens the input tokens.
- * @param {number} [upto=2] number of tokens to be negated after the negation
- * token. Note, tokens are only negated either `upto` tokens or up to the token
- * preceeding the **`, . ; : ! ?`** punctuations.
- * @return {string[]} tokens with negation propagated.
- * @example
- * propagateNegations( [ 'mary', 'is', 'not', 'feeling', 'good', 'today' ] );
- * // -> [ 'mary', 'is', 'not', '!feeling', '!good', 'today' ]
- */
-var propagateNegations = function ( tokens, upto ) {
-  var i, imax, j, jmax;
-  var tkns = tokens;
-  var limit = upto || 2;
-  for ( i = 0, imax = tkns.length; i < imax; i += 1 ) {
-    if ( rgx.negations.test( tkns[ i ] ) ) {
-      for ( j = i + 1, jmax = Math.min( imax, i + limit + 1 ); j < jmax; j += 1 ) {
-        // Hit a punctuation mark, break out of the loop otherwise go *upto the limit*.
-        // > TODO: promote to utilities regex, after test cases have been added.
-        if ( ( /[\,\.\;\:\!\?]/ ).test( tkns[ j ] ) ) break;
-        // Propoage negation: invert the token by prefixing a `!` to it.
-        tkns[ j ] = '!' + tkns[ j ];
-      }
-      i = j;
-    }
-  }
-  return tkns;
-}; // propagateNegations()
-
-module.exports = propagateNegations;
-
-},{"./util_regexes.js":45}],41:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-var defaultStopWords = require( './dictionaries/stop_words.json' );
-var words = require( './helper-return-words-filter.js' );
-defaultStopWords = words( defaultStopWords );
-
-// ## tokens
-
-// ### removeWords
-/**
- *
- * Removes the stop words from the input array of tokens.
- *
- * @alias tokens#removeWords
- * @param {string[]} tokens the input tokens.
- * @param {wordsFilter} [stopWords=defaultStopWords] default stop words are
- * loaded from `stop_words.json` located under the `src/dictionaries/` directory.
- * Custom stop words can be created using [helper.returnWordsFilter ](#helperreturnwordsfilter).
- * @return {string[]} balance tokens.
- * @example
- * removeWords( [ 'this', 'is', 'a', 'cat' ] );
- * // -> [ 'cat' ]
- */
-var removeWords = function ( tokens, stopWords ) {
-  var givenStopWords = ( stopWords || defaultStopWords );
-  return tokens.filter( givenStopWords.exclude );
-}; // removeWords()
-
-module.exports = removeWords;
-
-},{"./dictionaries/stop_words.json":5,"./helper-return-words-filter.js":8}],42:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var stringSoundex = require( './string-soundex.js' );
-
-// ## tokens
-
-// ### soundex
-/**
- *
- * Generates the soundex coded tokens from the input tokens.
- *
- * @alias tokens#soundex
- * @param {string[]} tokens the input tokens.
- * @return {string[]} soundex coded tokens.
- * @example
- * soundex( [ 'he', 'acted', 'decisively', 'today' ] );
- * // -> [ 'H000', 'A233', 'D221', 'T300' ]
- */
-var soundex = function ( tokens ) {
-  // Need to send `maxLength` as `undefined`.
-  return tokens.map( ( t ) => stringSoundex( t ) );
-}; // soundex()
-
-module.exports = soundex;
-
-},{"./string-soundex.js":30}],43:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-
-// ## string
-
-// ### setOfWords
-/**
- *
- * Generates the set of words from the input string. It also has an alias **`sow()`**.
- *
- * @alias tokens#setOfWords
- * @param {string[]} tokens the input tokens.
- * @param {function} [ifn=undefined] a function to build index; it is called for
- * every **member word of the set **; and it receives the word and the `idx`
- * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
- * may be used as `ifn`. If `undefined` then index is not built.
- * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
- * function.
- * @return {set} of words from tokens.
- * @example
- * setOfWords( [ 'rain', 'rain', 'go', 'away' ] );
- * // -> Set { 'rain', 'go', 'away' }
- */
-var setOfWords = function ( tokens, ifn, idx ) {
-  var tset = new Set( tokens );
-  if ( typeof ifn === 'function' ) {
-    tset.forEach( function ( m ) {
-        ifn( m, idx );
-    } );
-  }
-  return ( tset );
-}; // bow()
-
-module.exports = setOfWords;
-
-},{}],44:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var porter2Stemmer = require( 'wink-porter2-stemmer' );
-
-// ## tokens
-
-// ### stem
-/**
- *
- * Stems input tokens using Porter Stemming Algorithm Version 2.
- *
- * @alias tokens#stem
- * @param {string[]} tokens the input tokens.
- * @return {string[]} stemmed tokens.
- * @example
- * stem( [ 'he', 'acted', 'decisively', 'today' ] );
- * // -> [ 'he', 'act', 'decis', 'today' ]
- */
-var stem = function ( tokens ) {
-  return tokens.map( porter2Stemmer );
-}; // stem()
-
-module.exports = stem;
-
-},{"wink-porter2-stemmer":47}],45:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var rgx = Object.create( null );
-
-// Matches standard english punctuations in a text.
-rgx.punctuations = /[\’\'\‘\’\`\“\”\"\[\]\(\)\{\}\…\,\.\!\;\?\/\-\:]/ig;
-// End Of Sentence Punctuations - useful for splitting text into sentences.
-rgx.eosPunctuations = /([\.\?\!])\s*(?=[a-z]|\s+\d)/gi;
-
-// Matches special characters: `* + % # @ ^ = ~ | \` in a text.
-rgx.splChars = /[\*\+\%\#\@\^\=\~\|\\]/ig;
-
-// Matches common english elisions including n't.
-// These are special ones as 's otherwise may be apostrophe!
-rgx.elisionsSpl = /(\b)(it|let|that|who|what|here|there|when|where|why|how)(\'s)\b/gi;
-// Single (1) character elisions.
-rgx.elisions1 = /([a-z])(\'d|\'m)\b/gi;
-// Two (2) character elisions.
-rgx.elisions2 = /([a-z])(\'ll|\'ve|\'re|n\'t)\b/gi;
-// Sperate not elision 'nt.
-rgx.notElision = /([a-z])(n\'t)\b/gi;
-// Specially handle cannot
-rgx.cannot = /\b(can)(not)\b/gi;
-
-// Matches space, tab, or new line characters in text.
-rgx.spaces = /\s+/ig;
-// Matches anything other than space, tab, or new line characters.
-rgx.notSpace = /\S/g;
-// Matches alpha and space characters in a text.
-rgx.alphaSpace = /[a-z\s]/ig;
-// Matches alphanumerals and space characters in a text.
-rgx.alphaNumericSpace = /[a-z0-9\s]/ig;
-// Matches non alpha characters in a text.
-rgx.notAlpha = /[^a-z]/ig;
-// Matches non alphanumerals in a text.
-rgx.notAlphaNumeric = /[^a-z0-9]/ig;
-// Matches one or more non-words characters.
-rgx.nonWords = /\W+/ig;
-// Matches complete negation token
-rgx.negations = /^(never|none|not|no)$/ig;
-
-// Matches run of capital words in a text.
-rgx.rocWords = /(?:\b[A-Z][A-Za-z]*\s*){2,}/g;
-
-// Matches integer, decimal, JS floating point numbers in a text.
-rgx.number = /[0-9]*\.[0-9]+e[\+\-]{1}[0-9]+|[0-9]*\.[0-9]+|[0-9]+/ig;
-
-// Matches time in 12 hour am/pm format in a text.
-rgx.timeIn12HrAMPM = /(?:[0-9]|0[0-9]|1[0-2])((:?:[0-5][0-9])){0,1}\s?(?:[aApP][mM])/ig;
-
-// Matches HTML tags - in fact any thing enclosed in angular brackets including
-// the brackets.
-rgx.htmlTags = /(?:<[^>]*>)/g;
-// Matches the HTML Esc Sequences
-// Esc Seq of type `&lt;` or `&nbsp;`
-rgx.htmlEscSeq1 = /(?:&[a-z]{2,6};)/gi;
-// Esc Seq of type `&#32;`
-rgx.htmlEscSeq2 = /(?:&#[0-9]{2,4};)/gi;
-
-// Tests if a given string is possibly in the Indian mobile telephone number format.
-rgx.mobileIndian = /^(0|\+91)?[789]\d{9}$/;
-// Tests if a given string is in the valid email format.
-rgx.email = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-
-// Extracts any number and text from a <number><text> format text.
-// Useful in extracting value and UoM from strings like `2.7 Kgs`.
-rgx.separateNumAndText = /([0-9]*\.[0-9]+e[\+\-]{1}[0-9]+|[0-9]*\.[0-9]+|[0-9]+)[\s]*(.*)/i;
-
-// Crude date parser for a string containg date in a valid format.
-// > TODO: Need to improve this one!
-rgx.date = /(\d+)/ig;
-
-// Following 3 regexes are specially coded for `tokenize()` in prepare_text.
-// Matches punctuations that are not a part of a number.
-rgx.nonNumPunctuations = /[\.\,\-](?=\D)/gi;
-rgx.otherPunctuations = /[\’\'\‘\’\`\“\”\"\[\]\(\)\{\}\…\!\;\?\/\:]/ig;
-// > TODO: Add more currency symbols here.
-rgx.currency = /[\$\£\¥\€]/ig;
-
-//
-module.exports = rgx;
-
-},{}],46:[function(require,module,exports){
-//     wink-nlp-utils
-//     NLP Functions for amplifying negations, managing elisions,
-//     creating ngrams, stems, phonetic codes to tokens and more.
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-nlp-utils”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-//
-var porter2Stemmer = require( 'wink-porter2-stemmer' );
-
-// ### Prepare Name Space
-
-// Create prepare name space.
-var prepare = Object.create( null );
-
-/**
- * Helper
- * @namespace helper
- */
-prepare.helper = Object.create( null );
-
-// Words
-prepare.helper.returnWordsFilter = require( './helper-return-words-filter.js' );
-prepare.helper.words = prepare.helper.returnWordsFilter;
-// Make better **alias** name for the `word()` function.
-
-// Index
-prepare.helper.index = require( './helper-return-indexer.js' );
-// Make better **alias** name for the `index()` function.
-prepare.helper.returnIndexer = prepare.helper.index;
-
-// Return Quoted Text Extractor
-prepare.helper.returnQuotedTextExtractor = require( './helper-return-quoted-text-extractor.js' );
-
-/**
- * String
- * @namespace string
- */
-prepare.string = Object.create( null );
-
-// Lower Case
-prepare.string.lowerCase = require( './string-lower-case.js' );
-// Upper Case
-prepare.string.upperCase = require( './string-upper-case.js' );
-// Trim
-prepare.string.trim = require( './string-trim.js' );
-// Remove Extra Spaces
-prepare.string.removeExtraSpaces = require( './string-remove-extra-spaces.js' );
-// Retain Alpha-numerics
-prepare.string.retainAlphaNums = require( './string-retain-alpha-nums.js' );
-// Extract Person's Name
-prepare.string.extractPersonsName = require( './string-extract-persons-name.js' );
-// Extract Run of Capital Words
-prepare.string.extractRunOfCapitalWords = require( './string-extract-run-of-capital-words.js' );
-// Remove Punctuations
-prepare.string.removePunctuations = require( './string-remove-punctuations.js' );
-// Remove Special Chars
-prepare.string.removeSplChars = require( './string-remove-spl-chars.js' );
-// Remove HTML Tags
-prepare.string.removeHTMLTags = require( './string-remove-html-tags.js' );
-// Remove Elisions
-prepare.string.removeElisions = require( './string-remove-elisions.js' );
-// Split Elisions
-prepare.string.splitElisions = require( './string-split-elisions.js' );
-// Amplify Not Elision
-prepare.string.amplifyNotElision = require( './string-amplify-not-elision' );
-// Marker
-prepare.string.marker = require( './string-marker.js' );
-// SOC
-prepare.string.soc = require( './string-soc.js' );
-prepare.string.setOfChars = require( './string-soc.js' );
-// NGrams
-prepare.string.ngrams = require( './string-ngram.js' );
-// Edge NGrams
-prepare.string.edgeNGrams = require( './string-edge-ngrams.js' );
-// BONG
-prepare.string.bong = require( './string-bong.js' );
-prepare.string.bagOfNGrams = require( './string-bong.js' );
-// SONG
-prepare.string.song = require( './string-song.js' );
-prepare.string.setOfNGrams = require( './string-song.js' );
-// Sentences
-prepare.string.sentences = require( './string-sentences.js' );
-// Compose Corpus
-prepare.string.composeCorpus = require( './string-compose-corpus.js' );
-// Tokenize0
-prepare.string.tokenize0 = require( './string-tokenize0.js' );
-// Tokenize
-prepare.string.tokenize = require( './string-tokenize.js' );
-// #### Stem
-prepare.string.stem = porter2Stemmer;
-// Phonetize
-prepare.string.phonetize = require( './string-phonetize.js' );
-// Soundex
-prepare.string.soundex = require( './string-soundex.js' );
-
-/**
- * Tokens
- * @namespace tokens
- */
-prepare.tokens = Object.create( null );
-
-// Stem
-prepare.tokens.stem = require( './tokens-stem.js' );
-// Phonetize
-prepare.tokens.phonetize = require( './tokens-phonetize.js' );
-// Soundex
-prepare.tokens.soundex = require( './tokens-soundex.js' );
-// Remove Words
-prepare.tokens.removeWords = require( './tokens-remove-words.js' );
-// BOW
-prepare.tokens.bow = require( './tokens-bow.js' );
-prepare.tokens.bagOfWords = require( './tokens-bow.js' );
-// SOW
-prepare.tokens.sow = require( './tokens-sow.js' );
-prepare.tokens.setOfWords = require( './tokens-sow.js' );
-// Propagate Negations
-prepare.tokens.propagateNegations = require( './tokens-propagate-negations.js' );
-// Bigrams
-prepare.tokens.bigrams = require( './tokens-bigrams.js' );
-// Append Bigrams
-prepare.tokens.appendBigrams = require( './tokens-append-bigrams.js' );
-
-// Export prepare.
-module.exports = prepare;
-
-},{"./helper-return-indexer.js":6,"./helper-return-quoted-text-extractor.js":7,"./helper-return-words-filter.js":8,"./string-amplify-not-elision":11,"./string-bong.js":12,"./string-compose-corpus.js":13,"./string-edge-ngrams.js":14,"./string-extract-persons-name.js":15,"./string-extract-run-of-capital-words.js":16,"./string-lower-case.js":17,"./string-marker.js":18,"./string-ngram.js":19,"./string-phonetize.js":20,"./string-remove-elisions.js":21,"./string-remove-extra-spaces.js":22,"./string-remove-html-tags.js":23,"./string-remove-punctuations.js":24,"./string-remove-spl-chars.js":25,"./string-retain-alpha-nums.js":26,"./string-sentences.js":27,"./string-soc.js":28,"./string-song.js":29,"./string-soundex.js":30,"./string-split-elisions.js":31,"./string-tokenize.js":32,"./string-tokenize0.js":33,"./string-trim.js":34,"./string-upper-case.js":35,"./tokens-append-bigrams.js":36,"./tokens-bigrams.js":37,"./tokens-bow.js":38,"./tokens-phonetize.js":39,"./tokens-propagate-negations.js":40,"./tokens-remove-words.js":41,"./tokens-soundex.js":42,"./tokens-sow.js":43,"./tokens-stem.js":44,"wink-porter2-stemmer":47}],47:[function(require,module,exports){
-//     wink-porter2-stemmer
-//     Implementation of Porter Stemmer Algorithm V2 by Dr Martin F Porter
-//
-//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
-//
-//     This file is part of “wink-porter2-stemmer”.
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-//     DEALINGS IN THE SOFTWARE.
-
-// Implements the Porter Stemmer Algorithm V2 by Dr Martin F Porter.
-// Reference: https://snowballstem.org/algorithms/english/stemmer.html
-
-// ## Regex Definitions
-
-// Regex definition of `double`.
-var rgxDouble = /(bb|dd|ff|gg|mm|nn|pp|rr|tt)$/;
-// Definition for Step Ia suffixes.
-var rgxSFXsses = /(.+)(sses)$/;
-var rgxSFXiedORies2 = /(.{2,})(ied|ies)$/;
-var rgxSFXiedORies1 = /(.{1})(ied|ies)$/;
-var rgxSFXusORss = /(.+)(us|ss)$/;
-var rgxSFXs = /(.+)(s)$/;
-// Definition for Step Ib suffixes.
-var rgxSFXeedlyOReed = /(.*)(eedly|eed)$/;
-var rgxSFXedORedlyORinglyORing = /([aeiouy].*)(ed|edly|ingly|ing)$/;
-var rgxSFXatORblORiz = /(at|bl|iz)$/;
-// Definition for Step Ic suffixes.
-var rgxSFXyOR3 = /(.+[^aeiouy])([y3])$/;
-// Definition for Step II suffixes; note we have spot the longest suffix.
-var rgxSFXstep2 = /(ization|ational|fulness|ousness|iveness|tional|biliti|lessli|entli|ation|alism|aliti|ousli|iviti|fulli|enci|anci|abli|izer|ator|alli|bli|ogi|li)$/;
-var rgxSFXstep2WithReplacements = [
-  // Length 7.
-  { rgx: /ational$/, replacement: 'ate' },
-  { rgx: /ization$/, replacement: 'ize' },
-  { rgx: /fulness$/, replacement: 'ful' },
-  { rgx: /ousness$/, replacement: 'ous' },
-  { rgx: /iveness$/, replacement: 'ive' },
-  // Length 6.
-  { rgx: /tional$/, replacement: 'tion' },
-  { rgx: /biliti$/, replacement: 'ble' },
-  { rgx: /lessli$/, replacement: 'less' },
-  // Length 5.
-  { rgx: /iviti$/, replacement: 'ive' },
-  { rgx: /ousli$/, replacement: 'ous' },
-  { rgx: /ation$/, replacement: 'ate' },
-  { rgx: /entli$/, replacement: 'ent' },
-  { rgx: /(.*)(alism|aliti)$/, replacement: '$1al' },
-  { rgx: /fulli$/, replacement: 'ful' },
-  // Length 4.
-  { rgx: /alli$/, replacement: 'al' },
-  { rgx: /ator$/, replacement: 'ate' },
-  { rgx: /izer$/, replacement: 'ize' },
-  { rgx: /enci$/, replacement: 'ence' },
-  { rgx: /anci$/, replacement: 'ance' },
-  { rgx: /abli$/, replacement: 'able' },
-  // Length 3.
-  { rgx: /bli$/, replacement: 'ble' },
-  { rgx: /(.*)(l)(ogi)$/, replacement: '$1$2og' },
-  // Length 2.
-  { rgx: /(.*)([cdeghkmnrt])(li)$/, replacement: '$1$2' }
-];
-// Definition for Step III suffixes; once again spot the longest one first!
-var rgxSFXstep3 = /(ational|tional|alize|icate|iciti|ative|ical|ness|ful)$/;
-var rgxSFXstep3WithReplacements = [
-  { rgx: /ational$/, replacement: 'ate' },
-  { rgx: /tional$/, replacement: 'tion' },
-  { rgx: /alize$/, replacement: 'al' },
-  { rgx: /(.*)(icate|iciti|ical)$/, replacement: '$1ic' },
-  { rgx: /(ness|ful)$/, replacement: '' },
-];
-// Definition for Step IV suffixes.
-var rgxSFXstep4 = /(ement|ance|ence|able|ible|ment|ant|ent|ism|ate|iti|ous|ive|ize|al|er|ic)$/;
-var rgxSFXstep4Full = /(ement|ance|ence|able|ible|ment|ant|ent|ism|ate|iti|ous|ive|ize|ion|al|er|ic)$/;
-var rgxSFXstep4ion = /(.*)(s|t)(ion)$/;
-// Exceptions Set I.
-var exceptions1 = {
-  // Mapped!
-  'skis': 'ski',
-  'skies': 'sky',
-  'dying': 'die',
-  'lying': 'lie',
-  'tying': 'tie',
-  'idly': 'idl',
-  'gently': 'gentl',
-  'ugly': 'ugli',
-  'early': 'earli',
-  'only': 'onli',
-  'singly': 'singl',
-  // Invariants!
-  'sky': 'sky',
-  'news': 'news',
-  'atlas': 'atlas',
-  'cosmos': 'cosmos',
-  'bias': 'bias',
-  'andes': 'andes'
-};
-// Exceptions Set II.
-// Note, these are to be treated as full words.
-var rgxException2 = /^(inning|outing|canning|herring|proceed|exceed|succeed|earring)$/;
-
-// ## Private functions
-
-// ### prelude
-/**
- * Performs initial pre-processing by transforming the input string `s` as
- * per the replacements.
- *
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var prelude = function ( s ) {
-  return ( s
-            // Handle `y`'s.
-            .replace( /^y/, '3' )
-            .replace( /([aeiou])y/, '$13' )
-            // Handle apostrophe.
-            .replace( /\’s$|\'s$/, '' )
-            .replace( /s\’$|s\'$/, '' )
-            .replace( /[\’\']$/, '' )
-         );
-}; // prelude()
-
-// ### isShort
-/**
- * @param {String} s Input string
- * @return {Boolean} `true` if `s` is a short syllable, `false` otherwise
- * @private
- */
-var isShort = function ( s ) {
-  // (a) a vowel followed by a non-vowel other than w, x or 3 and
-  // preceded by a non-vowel, **or** (b) a vowel at the beginning of the word
-  // followed by a non-vowel.
-  return (
-    (
-      (
-        ( /[^aeiouy][aeiouy][^aeiouywx3]$/ ).test( s ) ||
-        ( /^[aeiouy][^aeiouy]{0,1}$/ ).test( s ) // Removed this new changed??
-      )
-    )
-  );
-}; // isShort()
-
-// ### markRegions
-/**
- * @param {String} s Input string
- * @return {Object} the `R1` and `R2` regions as an object from the input string `s`.
- * @private
- */
-var markRegions = function ( s ) {
-  // Matches of `R1` and `R2`.
-  var m1, m2;
-  // To detect regions i.e. `R1` and `R2`.
-  var rgxRegions = /[aeiouy]+([^aeiouy]{1}.+)/;
-  m1 = rgxRegions.exec( s );
-  if ( !m1 ) return ( { r1: '', r2: '' } );
-  m1 = m1[ 1 ].slice( 1 );
-  // Handle exceptions here to prevent over stemming.
-  m1 = ( ( /^(gener|commun|arsen)/ ).test( s ) ) ? s.replace( /^(gener|commun|arsen)(.*)/, '$2') : m1;
-  m2 = rgxRegions.exec( m1 );
-  if ( !m2 ) return ( { r1: m1, r2: '' } );
-  m2 = m2[ 1 ].slice( 1 );
-  return ( { r1: m1, r2: m2 } );
-}; // markRegions()
-
-// ### step1a
-/**
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var step1a = function ( s ) {
-  var wordPart;
-  if ( rgxSFXsses.test( s ) ) return ( s.replace( rgxSFXsses, '$1ss' ) );
-  if ( rgxSFXiedORies2.test( s ) ) return ( s.replace( rgxSFXiedORies2, '$1i' ) );
-  if ( rgxSFXiedORies1.test( s ) ) return ( s.replace( rgxSFXiedORies1, '$1ie' ) );
-  if ( rgxSFXusORss.test( s ) ) return ( s );
-  wordPart = s.replace( rgxSFXs, '$1' );
-  if ( ( /[aeiuouy](.+)$/ ).test( wordPart ) ) return ( s.replace( rgxSFXs, '$1' ) );
-  return ( s );
-}; // step1a()
-
-// ### step1b
-/**
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var step1b = function ( s ) {
-  var rgn = markRegions( s ),
-  sd;
-  // Search for the longest among the `eedly|eed` suffixes.
-  if ( rgxSFXeedlyOReed.test( s ) )
-    // Replace by ee if in R1.
-    return ( rgxSFXeedlyOReed.test( rgn.r1 ) ? s.replace( rgxSFXeedlyOReed, '$1ee' ) : s );
-  // Delete `ed|edly|ingly|ing` if the preceding word part contains a vowel.
-  if ( rgxSFXedORedlyORinglyORing.test( s ) ) {
-    sd = s.replace( rgxSFXedORedlyORinglyORing, '$1' );
-    rgn = markRegions( sd );
-    // And after deletion, return either
-    return ( rgxSFXatORblORiz.test( sd ) ) ? ( sd + 'e' ) :
-            // or
-            ( rgxDouble.test( sd ) ) ? ( sd.replace( /.$/, '' ) ) :
-              // or
-              ( ( isShort( sd ) ) && ( rgn.r1 === '' ) ) ? ( sd + 'e' ) :
-                // or
-                sd;
-  }
-  return ( s );
-}; // step1b()
-
-// ### step1c
-/**
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var step1c = function ( s ) {
-  return ( s.replace( rgxSFXyOR3, '$1i') );
-}; // step1c()
-
-// ### step2
-/**
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var step2 = function ( s ) {
-  var i, imax,
-      rgn = markRegions( s ),
-      us; // updated s.
-  var match = s.match( rgxSFXstep2 );
-  match = ( match === null ) ? '$$$$$' : match[ 1 ];
-  if ( rgn.r1.indexOf( match ) !== -1 ) {
-    for ( i = 0, imax = rgxSFXstep2WithReplacements.length; i < imax; i += 1 ) {
-      us = s.replace( rgxSFXstep2WithReplacements[ i ].rgx, rgxSFXstep2WithReplacements[ i ].replacement );
-      if ( s !== us ) return ( us );
-    }
-  }
-  return ( s );
-}; // step2()
-
-// ### step3
-/**
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var step3 = function ( s ) {
-  var i, imax,
-      rgn = markRegions( s ),
-      us; // updated s.
-  var match = s.match( rgxSFXstep3 );
-  match = ( match === null ) ? '$$$$$' : match[ 1 ];
-
-  if ( rgn.r1.indexOf( match ) !== -1 ) {
-    for ( i = 0, imax = rgxSFXstep3WithReplacements.length; i < imax; i += 1 ) {
-      us = s.replace( rgxSFXstep3WithReplacements[ i ].rgx, rgxSFXstep3WithReplacements[ i ].replacement );
-      if ( s !== us ) return ( us );
-    }
-    if ( ( /ative/ ).test( rgn.r2 ) ) return s.replace( /ative$/, '' );
-  }
-  return ( s );
-}; // step3()
-
-// ### step4
-/**
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var step4 = function ( s ) {
-  var rgn = markRegions( s );
-  var match = s.match( rgxSFXstep4Full );
-  match = ( match === null ) ? '$$$$$' : match[ 1 ];
-  if ( rgxSFXstep4Full.test( s ) &&  rgn.r2.indexOf( match ) !== -1 ) {
-    return rgxSFXstep4.test( s ) ? s.replace( rgxSFXstep4, '' ) :
-    (
-      rgxSFXstep4ion.test( s ) ?
-      s.replace( rgxSFXstep4ion, '$1$2') :
-      s
-    );
-  }
-  return ( s );
-}; // step4()
-
-// ### step5
-/**
- * @param {String} s Input string
- * @return {String} Processed string
- * @private
- */
-var step5 = function ( s ) {
-  var preceding, rgn;
-  // Search for the `e` suffixes.
-  rgn = markRegions( s );
-  if ( ( /e$/i ).test( s ) ) {
-    preceding = s.replace( /e$/, '' );
-    return (
-              // Found: delete if in R2, or in R1 and not preceded by a short syllable
-              ( /e/ ).test( rgn.r2 ) || ( ( /e/ ).test( rgn.r1 ) && !isShort( preceding ) ) ?
-              preceding : s
-           );
-  }
-  // Search for the `l` suffixes.
-  if ( ( /l$/ ).test( s ) ) {
-    rgn = markRegions( s );
-    // Found: delete if in R2
-    return ( rgn.r2 && ( /l$/ ).test( rgn.r2 ) ? s.replace( ( /ll$/ ), 'l' ) : s );
-  }
-  // If nothing happens, must return the string!
-  return ( s );
-}; // step5()
-
-// ## Public functions
-// ### stem
-/**
- *
- * Stems an inflected `word` using Porter2 stemming algorithm.
- *
- * @param {string} word — word to be stemmed.
- * @return {string} — the stemmed word.
- *
- * @example
- * stem( 'consisting' );
- * // -> consist
- */
-var stem = function ( word ) {
-  var str = word.toLowerCase();
-  if ( str.length < 3 ) return ( str );
-  if ( exceptions1[ str ] ) return ( exceptions1[ str ] );
-  str = prelude( str );
-  str = step1a( str );
-
-  if ( !rgxException2.test( str ) ) {
-    str = step1b( str );
-    str = step1c( str );
-    str = step2( str );
-    str = step3( str );
-    str = step4( str );
-    str = step5( str );
-  }
-
-  str = str.replace( /3/g , 'y' );
-  return ( str );
-}; // stem()
-
-// Export stem function.
-module.exports = stem;
-
-},{}],48:[function(require,module,exports){
 //     wink-tokenizer
 //     Multilingual tokenizer that automatically tags each token with its type.
 //
@@ -4993,7 +1706,7 @@ contractions[ 'It\'d\'ve' ] = [ { value: 'It', tag: word }, { value: '\'d', tag:
 
 module.exports = contractions;
 
-},{}],49:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 //     wink-tokenizer
 //     Multilingual tokenizer that automatically tags each token with its type.
 //
@@ -5029,37 +1742,37 @@ var rgxOrdinalL1 = /1\dth|[04-9]th|1st|2nd|3rd|[02-9]1st|[02-9]2nd|[02-9]3rd|[02
 // numbers are also detected as numbers only. These regex will therefore detected
 // 8.8.8.8 or 12-12-1924 or 1,1,1,1.00 or 1/4 or 1/4/66/777 as numbers.
 // Latin-1 Numbers.
-var rgxNumberL1 = /\d+\/\d+|\d(?:[\.\,\-\/]?\d)*(?:\.\d+)?/g;
+var rgxNumberL1 = /\d+\/\d+|\d(?:[\.,-\/]?\d)*(?:\.\d+)?/g;
 // Devanagari Numbers.
-var rgxNumberDV = /[\u0966-\u096F]+\/[\u0966-\u096F]+|[\u0966-\u096F](?:[\.\,\-\/]?[\u0966-\u096F])*(?:\.[\u0966-\u096F]+)?/g;
-var rgxMention = /\@\w+/g;
+var rgxNumberDV = /[\u0966-\u096F]+\/[\u0966-\u096F]+|[\u0966-\u096F](?:[\.,-\/]?[\u0966-\u096F])*(?:\.[\u0966-\u096F]+)?/g;
+var rgxMention = /@\w+/g;
 // Latin-1 Hashtags.
-var rgxHashtagL1 = /\#[a-z][a-z0-9]*/gi;
+var rgxHashtagL1 = /#[a-z][a-z0-9]*/gi;
 // Devanagari Hashtags; include Latin-1 as well.
-var rgxHashtagDV = /\#[\u0900-\u0963\u0970-\u097F][\u0900-\u0963\u0970-\u097F\u0966-\u096F0-9]*/gi;
+var rgxHashtagDV = /#[\u0900-\u0963\u0970-\u097F][\u0900-\u0963\u0970-\u097F\u0966-\u096F0-9]*/gi;
 // EMail is EN character set.
 var rgxEmail = /[-!#$%&'*+\/=?^\w{|}~](?:\.?[-!#$%&'*+\/=?^\w`{|}~])*@[a-z0-9](?:-?\.?[a-z0-9])*(?:\.[a-z](?:-?[a-z0-9])*)+/gi;
 // Bitcoin, Ruble, Indian Rupee, Other Rupee, Dollar, Pound, Yen, Euro, Wong.
-var rgxCurrency = /[\₿\₽\₹\₨\$\£\¥\€\₩]/g;
+var rgxCurrency = /[₿₽₹₨$£¥€₩]/g;
 // These include both the punctuations: Latin-1 & Devanagari.
-var rgxPunctuation = /[\’\'\‘\’\`\“\”\"\[\]\(\)\{\}\…\,\.\!\;\?\-\:\u0964\u0965]/g;
-var rgxQuotedPhrase = /\"[^\"]*\"/g;
+var rgxPunctuation = /[’'‘’`“”"\[\]\(\){}…,\.!;\?\-:\u0964\u0965]/g;
+var rgxQuotedPhrase = /"[^"]*"/g;
 // NOTE: URL will support only EN character set for now.
 var rgxURL = /(?:https?:\/\/)(?:[\da-z\.-]+)\.(?:[a-z\.]{2,6})(?:[\/\w\.\-\?#=]*)*\/?/gi;
 var rgxEmoji = /[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u26FF]|[\u2700-\u27BF]/g;
-var rgxEmoticon = /:-?[dps\*\/\[\]\{\}\(\)]|;-?[/(/)d]|<3/gi;
+var rgxEmoticon = /:-?[dps\*\/\[\]{}\(\)]|;-?[/(/)d]|<3/gi;
 var rgxTime = /(?:\d|[01]\d|2[0-3]):?(?:[0-5][0-9])?\s?(?:[ap]\.?m\.?|hours|hrs)/gi;
 // Inlcude [Latin-1 Supplement Unicode Block](https://en.wikipedia.org/wiki/Latin-1_Supplement_(Unicode_block))
-var rgxWordL1 = /[a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF][a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\']*/gi;
+var rgxWordL1 = /[a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF][a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF']*/gi;
 // Define [Devanagari Unicode Block](https://unicode.org/charts/PDF/U0900.pdf)
 var rgxWordDV = /[\u0900-\u094F\u0951-\u0963\u0970-\u097F]+/gi;
 // Symbols go here; including Om.
-var rgxSymbol = /[\u0950\~\@\#\%\^\+\=\*\|\/<>&]/g;
+var rgxSymbol = /[\u0950~@#%\^\+=\*\|\/<>&]/g;
 // For detecting if the word is a potential contraction.
-var rgxContraction = /\'/;
+var rgxContraction = /'/;
 // Singular & Plural possessive
-var rgxPosSingular = /([a-z]+)(\'s)$/i;
-var rgxPosPlural = /([a-z]+s)(\')$/i;
+var rgxPosSingular = /([a-z]+)('s)$/i;
+var rgxPosPlural = /([a-z]+s)(')$/i;
 // Regexes and their categories; used for tokenizing via match/split. The
 // sequence is *critical* for correct tokenization.
 var rgxsMaster = [
@@ -5476,32 +2189,3374 @@ var tokenizer = function () {
 
 module.exports = tokenizer;
 
-},{"./eng-contractions.js":48}],50:[function(require,module,exports){
+},{"./eng-contractions.js":6}],8:[function(require,module,exports){
+module.exports=[
+  "i",
+  "me",
+  "my",
+  "myself",
+  "we",
+  "our",
+  "ours",
+  "ourselves",
+  "you",
+  "your",
+  "yours",
+  "yourself",
+  "yourselves",
+  "he",
+  "him",
+  "his",
+  "himself",
+  "she",
+  "her",
+  "hers",
+  "herself",
+  "it",
+  "its",
+  "itself",
+  "they",
+  "them",
+  "their",
+  "theirs",
+  "themselves",
+  "what",
+  "which",
+  "who",
+  "whom",
+  "this",
+  "that",
+  "these",
+  "those",
+  "am",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "been",
+  "being",
+  "have",
+  "has",
+  "had",
+  "having",
+  "do",
+  "does",
+  "did",
+  "doing",
+  "would",
+  "should",
+  "could",
+  "ought",
+  "i'm",
+  "you're",
+  "he's",
+  "she's",
+  "it's",
+  "we're",
+  "they're",
+  "i've",
+  "you've",
+  "we've",
+  "they've",
+  "i'd",
+  "you'd",
+  "he'd",
+  "she'd",
+  "we'd",
+  "they'd",
+  "i'll",
+  "you'll",
+  "he'll",
+  "she'll",
+  "we'll",
+  "they'll",
+  "let's",
+  "that's",
+  "who's",
+  "what's",
+  "here's",
+  "there's",
+  "when's",
+  "where's",
+  "why's",
+  "how's",
+  "a",
+  "an",
+  "the",
+  "and",
+  "but",
+  "if",
+  "or",
+  "because",
+  "as",
+  "until",
+  "while",
+  "of",
+  "at",
+  "by",
+  "for",
+  "with",
+  "about",
+  "against",
+  "between",
+  "into",
+  "through",
+  "during",
+  "before",
+  "after",
+  "above",
+  "below",
+  "to",
+  "from",
+  "up",
+  "down",
+  "in",
+  "out",
+  "on",
+  "off",
+  "over",
+  "under",
+  "again",
+  "further",
+  "then",
+  "once",
+  "here",
+  "there",
+  "when",
+  "where",
+  "why",
+  "how",
+  "all",
+  "any",
+  "both",
+  "each",
+  "few",
+  "more",
+  "most",
+  "other",
+  "some",
+  "such",
+  "only",
+  "own",
+  "same",
+  "so",
+  "than",
+  "too",
+  "very"
+]
+
+},{}],9:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### returnIndexer
+
+/**
+ *
+ * Returns an Indexer object that contains two functions. The first function `build()`
+ * incrementally builds an index for each `element` using `itsIndex` — both passed as
+ * parameters to it. The second function — `result()` allows accessing the index anytime.
+ *
+ * It is typically used with [string.soc](#stringsoc), [string.bong](#stringbong),
+ * [string.song](#stringsong), and [tokens.sow](#tokenssow).
+ *
+ * @alias helper#returnIndexer
+ * @return {indexer} used to build and access the index.
+ * @example
+ * var indexer = returnIndexer();
+ * // -> { build: [function], result: [function] }
+ */
+var returnIndexer = function () {
+  var theIndex = Object.create( null );
+  var methods = Object.create( null );
+
+  // Builds index by adding the `element` and `itsIndex`. The `itsIndex` should
+  // be a valid JS array index; no validation checks are performed while building
+  // index.
+  var build = function ( element, itsIndex ) {
+    theIndex[ element ] = theIndex[ element ] || [];
+    theIndex[ element ].push( itsIndex );
+    return true;
+  }; // build()
+
+  // Returns the index built so far.
+  var result = function () {
+    return theIndex;
+  }; // result()
+
+  methods.build = build;
+  methods.result = result;
+
+  return methods;
+}; // index()
+
+module.exports = returnIndexer;
+
+},{}],10:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### returnQuotedTextExtractor
+
+/**
+ *
+ * Returns a function that extracts all occurrences of every quoted text
+ * between the `lq` and the `rq` characters from its argument. This argument
+ * must be of type string.
+ *
+ * @alias helper#returnQuotedTextExtractor
+ * @param {string} [lq='"'] the left quote character.
+ * @param {string} [rq='"'] the right quote character.
+ * @return {function} that will accept an input string argument and return an
+ * array of all substrings that are quoted between `lq` and `rq`.
+ * @example
+ * var extractQuotedText = returnQuotedTextExtractor();
+ * extractQuotedText( 'Raise 2 issues - "fix a bug" & "run tests"' );
+ * // -> [ 'fix a bug', 'run tests' ]
+ */
+var returnQuotedTextExtractor = function ( lq, rq ) {
+  var // Index variable for *for-loop*
+      i,
+      // Set defaults for left quote, if required.
+      lq1 = ( ( lq && ( typeof lq === 'string' ) ) ? lq : '"' ),
+      // Extracts its length
+      lqLen = lq1.length,
+      // The regular expression is created here.
+      regex = null,
+      // The string containing the regular expression builds here.
+      rgxStr = '',
+      // Set defaults for right quote, if required.
+      rq1 = ( ( rq && ( typeof rq === 'string' ) ) ? rq : lq1 ),
+      // Extract its length.
+      rqLen = rq1.length;
+
+  // Build `rgxStr`
+  for ( i = 0; i < lqLen; i += 1 ) rgxStr += '\\' + lq1.charAt( i );
+  rgxStr += '.*?';
+  for ( i = 0; i < rqLen; i += 1 ) rgxStr += '\\' + rq1.charAt( i );
+  // Create regular expression.
+  regex = new RegExp( rgxStr, 'g' );
+  // Return the extractor function.
+  return ( function ( s ) {
+    if ( !s || ( typeof s !== 'string' ) ) return null;
+    var // Extracted elements are captured here.
+        elements = [],
+        // Extract matches with quotes
+        matches = s.match( regex );
+    if ( !matches || ( matches.length === 0 ) ) return null;
+    // Collect elements after removing the quotes.
+    for ( var k = 0, kmax = matches.length; k < kmax; k += 1 ) {
+      elements.push( matches[ k ].substr( lqLen, matches[ k ].length - ( rqLen + lqLen ) ) );
+    }
+    return ( elements );
+  } );
+}; // returnQuotedTextExtractor()
+
+module.exports = returnQuotedTextExtractor;
+
+},{}],11:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### returnWordsFilter
+
+/**
+ *
+ * Returns an object containing the following functions: (a) `set()`, which returns
+ * a set of mapped words given in the input array `words`. (b) `exclude()` that
+ * is suitable for array filtering operations.
+ *
+ * If the second argument `mappers` is provided as an array of maping functions
+ * then these are applied on the input array before converting into a set. A
+ * mapper function must accept a string as argument and return a string as the result.
+ * Examples of mapper functions are typically **string** functionss of **`wink-nlp-utils`**
+ * such as `string.lowerCase()`, `string.stem()` and
+ * `string.soundex()`.
+ *
+ * @alias helper#returnWordsFilter
+ * @param {string[]} words that can be filtered using the returned wordsFilter.
+ * @param {function[]} [mappers=undefined] optionally used to map each word before creating
+ * the wordsFilter.
+ * @return {wordsFilter} object containg `set()` and `exclude()` functions for `words`.
+ * @example
+ * var stopWords = [ 'This', 'That', 'Are', 'Is', 'Was', 'Will', 'a' ];
+ * var myFilter = returnWordsFilter( stopWords, [ string.lowerCase ] );
+ * [ 'this', 'is', 'a', 'cat' ].filter( myFilter.exclude );
+ * // -> [ 'cat' ]
+ */
+var returnWordsFilter = function ( words, mappers ) {
+  var mappedWords = words;
+  var givenMappers = mappers || [];
+  givenMappers.forEach( function ( m ) {
+    mappedWords = mappedWords.map( m );
+  } );
+
+  mappedWords = new Set( mappedWords );
+
+  var exclude = function ( t ) {
+    return ( !( mappedWords.has( t ) ) );
+  }; // exclude()
+
+  var set = function () {
+    return mappedWords;
+  }; // set()
+
+  return {
+    set: set,
+    exclude: exclude
+  };
+}; // returnWordsFilter()
+
+module.exports = returnWordsFilter;
+
+},{}],12:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var degrees = [
+  /\bm\.?\s*a\b/i,
+  /\bb\.?\s*a\b/i,
+  /\bb\.?\s*tech\b/i,
+  /\bm\.?\s*tech\b/i,
+  /\bb\.?\s*des\b/i,
+  /\bm\.?\s*des\b/i,
+  /\bm\.?\s*b\.?\s*a\b/i,
+  /\bm\.?\s*c\.?\s*a\b/i,
+  /\bb\.?\s*c\.?\s*a\b/i,
+  /\bl\.?\s*l\.?\s*b\b/i,
+  /\bl\.?\s*l\.?\s*m\b/i,
+  /\bm\.?\s*b\.?\s*b\.?\s*s\b/i,
+  /\bm\.?\s*d\b/i,
+  /\bd\.?\s*m\b/i,
+  /\bm\.?\s*s\b/i,
+  /\bd\.?\s*n\.?\s*b\b/i,
+  /\bd\.?\s*g\.?\s*o\b/i,
+  /\bd\.?\s*l\.?\s*o\b/i,
+  /\bb\.?\s*d\.?\s*s\b/i,
+  /\bb\.?\s*h\.?\s*m\.?\s*s\b/i,
+  /\bb\.?\s*a\.?\s*m\.?\s*s\b/i,
+  /\bf\.?\s*i\.?\s*c\.?\s*s\b/i,
+  /\bm\.?\s*n\.?\s*a\.?\s*m\.?\s*s\b/i,
+  /\bb\.?\s*e\.?\s*m\.?\s*s\b/i,
+  /\bd\.?\s*c\.?\s*h\b/i,
+  /\bm\.?\s*c\.?\s*h\b/i,
+  /\bf\.?\s*r\.?\s*c\.?\s*s\b/i,
+  /\bm\.?\s*r\.?\s*c\.?\s*p\b/i,
+  /\bf\.?\s*i\.?\s*a\.?\s*c\.?\s*m\b/i,
+  /\bf\.?\s*i\.?\s*m\.?\s*s\.?\s*a\b/i,
+  /\bp\.?\s*h\.?\s*d\b/i,
+ ];
+
+var titleNames = [ 'mr', 'mrs', 'miss', 'ms', 'master', 'er', 'dr', 'shri', 'shrimati', 'sir' ];
+
+var titles = new RegExp( '^(?:' + titleNames.join( '|' ) + ')$', 'i' );
+
+module.exports = {
+  degrees: degrees,
+  titles: titles
+};
+
+},{}],13:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+/* eslint no-underscore-dangle: "off" */
+var rgx = Object.create( null );
+// Remove repeating characters.
+rgx.repeatingChars = /([^c])\1/g;
+// Drop first character from character pairs, if found in the beginning.
+rgx.kngnPairs = /^(kn|gn|pn|ae|wr)/;
+// Drop vowels that are not found in the beginning.
+rgx.__vowels = /(?!^)[aeiou]/g;
+// Replaces `ough` in the end by 'f'
+rgx.ough = /ough$/;
+// Replace following 3 instances of `dg` by `j`.
+rgx.dge = /dge/g;
+rgx.dgi = /dgi/g;
+rgx.dgy = /dgy/g;
+// Replace `sch` by `sk`.
+rgx.sch = /sch/g;
+// Drop `c` in `sci, sce, scy`.
+rgx.sci = /sci/g;
+rgx.sce = /sce/g;
+rgx.scy = /scy/g;
+// Make 'sh' out of `tio & tia`.
+rgx.tio = /tio/g;
+rgx.tia = /tia/g;
+// `t` is silent in `tch`.
+rgx.tch = /tch/g;
+// Drop `b` in the end if preceeded by `m`.
+rgx.mb_ = /mb$/;
+// These are pronounced as `k`.
+rgx.cq = /cq/g;
+rgx.ck = /ck/g;
+// Here `c` sounds like `s`
+rgx.ce = /ce/g;
+rgx.ci = /ci/g;
+rgx.cy = /cy/g;
+// And this `f`.
+rgx.ph = /ph/g;
+// The `sh` finally replaced by `x`.
+rgx.sh = /sh|sio|sia/g;
+// This is open rgx - TODO: need to finalize.
+rgx.vrnotvy = /([aeiou])(r)([^aeiouy])/g;
+// `th` sounds like theta - make it 0.
+rgx.th = /th/g;
+// `c` sounds like `k` except when it is followed by `h`.
+rgx.cnoth = /(c)([^h])/g;
+// Even `q` sounds like `k`.
+rgx.q = /q/g;
+// The first `x` sounds like `s`.
+rgx._x = /^x/;
+// Otherwise `x` is more like `ks`.
+rgx.x = /x/g;
+// Drop `y` if not followed by a vowel or appears in the end.
+rgx.ynotv = /(y)([^aeiou])/g;
+rgx.y_ = /y$/;
+// `z` is `s`.
+rgx.z = /z/g;
+
+// Export rgx.
+module.exports = rgx;
+
+},{}],14:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### amplifyNotElision
+/**
+ *
+ * Amplifies the not elision by converting it into not; for example `isn't`
+ * becomes `is not`.
+ *
+ * @alias string#amplifyNotElision
+ * @param {string} str the input string.
+ * @return {string} input string after not elision amplification.
+ * @example
+ * amplifyNotElision( "someone's wallet, isn't it?" );
+ * // -> "someone's wallet, is not it?"
+ */
+var amplifyNotElision = function ( str ) {
+  return str.replace( rgx.notElision, '$1 not' );
+}; // amplifyNotElision()
+
+module.exports = amplifyNotElision;
+
+},{"./util_regexes.js":48}],15:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### bagOfNGrams
+/**
+ *
+ * Generates the bag of ngrams of `size` from the input string. The
+ * default size is 2, which means it will generate bag of bigrams by default. It
+ * also has an alias **`bong()`**.
+ *
+ * @alias string#bagOfNGrams
+ * @param {string} str the input string.
+ * @param {number} [size=2] ngram size.
+ * @param {function} [ifn=undefined] a function to build index; it is called for
+ * every **unique occurrence of ngram** of `str`; and it receives the ngram and the `idx`
+ * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
+ * may be used as `ifn`. If `undefined` then index is not built.
+ * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
+ * function.
+ * @return {object} bag of ngrams of `size` from `str`.
+ * @example
+ * bagOfNGrams( 'mama' );
+ * // -> { ma: 2, am: 1 }
+ * bong( 'mamma' );
+ * // -> { ma: 2, am: 1, mm: 1 }
+ */
+var bagOfNGrams = function ( str, size, ifn, idx ) {
+  var ng = ( size || 2 ),
+      ngBOW = Object.create( null ),
+      tg;
+  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
+    tg = str.slice( i, i + ng );
+    if ( tg.length === ng ) {
+      // Call `ifn` iff its defined and `tg` is appearing for the first time;
+      // this avoids multiple calls to `ifn`. Strategy applies to `song()`,
+      // and `bow()`.
+      if ( ( typeof ifn === 'function' ) && !ngBOW[ tg ] ) {
+          ifn( tg, idx );
+      }
+      // Now define, if required and then update counts.
+      ngBOW[ tg ] = 1 + ( ngBOW[ tg ] || 0 );
+    }
+  }
+  return ( ngBOW );
+}; // bong()
+
+module.exports = bagOfNGrams;
+
+},{}],16:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var helpers = require( 'wink-helpers' );
+var returnQuotedTextExtractor = require( './helper-return-quoted-text-extractor.js' );
+var extractQuotedText = returnQuotedTextExtractor( '[', ']' );
+// ## string
+
+// ### composeCorpus
+/**
+ *
+ * Generates all possible sentences from the input argument string.
+ * The string s must follow a special syntax as illustrated in the
+ * example below:<br/>
+ * `'[I] [am having|have] [a] [problem|question]'`<br/>
+ *
+ * Each phrase must be quoted between `[ ]` and each possible option of phrases
+ * (if any) must be separated by a `|` character. The corpus is composed by
+ * computing the cartesian product of all the phrases.
+ *
+ * @alias string#composeCorpus
+ * @param {string} str the input string.
+ * @return {string[]} of all possible sentences.
+ * @example
+ * composeCorpus( '[I] [am having|have] [a] [problem|question]' );
+ * // -> [ 'I am having a problem',
+ * //      'I am having a question',
+ * //      'I have a problem',
+ * //      'I have a question' ]
+ */
+var composeCorpus = function ( str ) {
+  if ( !str || ( typeof str !== 'string' ) ) return [];
+
+  var quotedTextElems = extractQuotedText( str );
+  var corpus = [];
+  var finalCorpus = [];
+
+  if ( !quotedTextElems ) return [];
+  quotedTextElems.forEach( function ( e ) {
+    corpus.push( e.split( '|' ) );
+  } );
+
+  helpers.array.product( corpus ).forEach( function ( e ) {
+    finalCorpus.push( e.join( ' ' ) );
+  } );
+  return ( finalCorpus );
+}; // composeCorpus()
+
+module.exports = composeCorpus;
+
+},{"./helper-return-quoted-text-extractor.js":10,"wink-helpers":5}],17:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### edgeNGrams
+/**
+ *
+ * Generates the edge ngrams from the input string.
+ *
+ * @alias string#edgeNGrams
+ * @param {string} str the input string.
+ * @param {number} [min=2] size of ngram generated.
+ * @param {number} [max=8] size of ngram is generated.
+ * @param {number} [delta=2] edge ngrams are generated in increments of this value.
+ * @param {function} [ifn=undefined] a function to build index; it is called for
+ * every edge ngram of `str`; and it receives the edge ngram and the `idx`
+ * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
+ * may be used as `ifn`. If `undefined` then index is not built.
+ * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
+ * function.
+ * @return {string[]} of edge ngrams.
+ * @example
+ * edgeNGrams( 'decisively' );
+ * // -> [ 'de', 'deci', 'decisi', 'decisive' ]
+ * edgeNGrams( 'decisively', 8, 10, 1 );
+ * // -> [ 'decisive', 'decisivel', 'decisively' ]
+ */
+var edgeNGrams = function ( str, min, max, delta, ifn, idx ) {
+  var dlta = ( delta || 2 ),
+      eg,
+      egs = [],
+      imax = Math.min( ( max || 8 ), str.length ) + 1,
+      start = ( min || 2 );
+
+  // Generate edge ngrams
+  for ( var i = start; i < imax; i += dlta ) {
+    eg = str.slice( 0, i );
+    egs.push( eg );
+    if ( typeof ifn === 'function' ) {
+        ifn( eg, idx );
+    }
+  }
+  return ( egs );
+}; // edgeNGrams()
+
+module.exports = edgeNGrams;
+
+},{}],18:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+var ncrgx = require( './name_cleaner_regexes.js' );
+
+// ## string
+
+// ### extractPersonsName
+/**
+ *
+ * Attempts to extract person's name from input string.
+ * It assmues the following name format:<br/>
+ * `[<salutations>] <name part as FN [MN] [LN]> [<degrees>]`<br/>
+ * Entities in square brackets are optional.
+ *
+ * @alias string#extractPersonsName
+ * @param {string} str the input string.
+ * @return {string} extracted name.
+ * @example
+ * extractPersonsName( 'Dr. Sarah Connor M. Tech., PhD. - AI' );
+ * // -> 'Sarah Connor'
+ */
+var extractPersonsName = function ( str ) {
+  // Remove Degrees by making the list of indexes of each degree and subsequently
+  // finding the minimum and slicing from there!
+  var indexes = ncrgx.degrees.map( function ( r ) {
+    var m = r.exec( str );
+    return ( m ) ? m.index : 999999;
+  } );
+  var sp = Math.min.apply( null, indexes );
+
+  // Generate an Array of Every Elelemnt of Name (e.g. title, first name,
+  // sir name, honours, etc)
+  var aeen = str.slice( 0, sp ).replace( rgx.notAlpha, ' ').replace( rgx.spaces, ' ').trim().split(' ');
+  // Remove titles from the beginning.
+  while ( aeen.length && ncrgx.titles.test( aeen[0] ) ) aeen.shift();
+  return aeen.join(' ');
+}; // extractPersonsName()
+
+module.exports = extractPersonsName;
+
+},{"./name_cleaner_regexes.js":12,"./util_regexes.js":48}],19:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+var trim = require( './string-trim.js' );
+// ## string
+
+// ### extractRunOfCapitalWords
+/**
+ *
+ * Extracts the array of text appearing as Title Case or in ALL CAPS from the
+ * input string.
+ *
+ * @alias string#extractRunOfCapitalWords
+ * @param {string} str the input string.
+ * @return {string[]} of text appearing in Title Case or in ALL CAPS; if no such
+ * text is found then `null` is returned.
+ * @example
+ * extractRunOfCapitalWords( 'In The Terminator, Sarah Connor is in Los Angeles' );
+ * // -> [ 'In The Terminator', 'Sarah Connor', 'Los Angeles' ]
+ */
+var extractRunOfCapitalWords = function ( str ) {
+  var m = str.match( rgx.rocWords );
+  return ( ( m ) ? m.map( trim ) : m );
+}; // extractRunOfCapitalWords()
+
+module.exports = extractRunOfCapitalWords;
+
+},{"./string-trim.js":37,"./util_regexes.js":48}],20:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### lowerCase
+/**
+ *
+ * Converts the input string to lower case.
+ *
+ * @alias string#lowerCase
+ * @param {string} str the input string.
+ * @return {string} input string in lower case.
+ * @example
+ * lowerCase( 'Lower Case' );
+ * // -> 'lower case'
+ */
+var lowerCase = function ( str ) {
+  return ( str.toLowerCase() );
+}; // lowerCase()
+
+module.exports = lowerCase;
+
+},{}],21:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### marker
+/**
+ *
+ * Generates `marker` of the input string; it is defined as 1-gram, sorted
+ * and joined back as a string again. Marker is a quick and aggressive way
+ * to detect similarity between short strings. Its aggression may lead to more
+ * false positives such as `Meter` and `Metre` or `no melon` and `no lemon`.
+ *
+ * @alias string#marker
+ * @param {string} str the input string.
+ * @return {string} the marker.
+ * @example
+ * marker( 'the quick brown fox jumps over the lazy dog' );
+ * // -> ' abcdefghijklmnopqrstuvwxyz'
+ */
+var marker = function ( str ) {
+  var uniqChars = Object.create( null );
+  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
+    uniqChars[ str[ i ] ] = true;
+  }
+  return ( Object.keys( uniqChars ).sort().join('') );
+}; // marker()
+
+module.exports = marker;
+
+},{}],22:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### ngram
+/**
+ *
+ * Generates an array of ngrams of a specified size from the input string. The
+ * default size is 2, which means it will generate bigrams by default.
+ *
+ * @alias string#ngram
+ * @param {string} str the input string.
+ * @param {number} [size=2] ngram's size.
+ * @return {string[]} ngrams of `size` from `str`.
+ * @example
+ * ngram( 'FRANCE' );
+ * // -> [ 'FR', 'RA', 'AN', 'NC', 'CE' ]
+ * ngram( 'FRENCH' );
+ * // -> [ 'FR', 'RE', 'EN', 'NC', 'CH' ]
+ * ngram( 'FRANCE', 3 );
+ * // -> [ 'FRA', 'RAN', 'ANC', 'NCE' ]
+ */
+var ngram = function ( str, size ) {
+  var ng = ( size || 2 ),
+      ngramz = [],
+      tg;
+  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
+    tg = str.slice( i, i + ng );
+    if ( tg.length === ng ) ngramz.push( tg );
+  }
+  return ( ngramz );
+}; // ngram()
+
+module.exports = ngram;
+
+},{}],23:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var phnrgx = require( './phonetize_regexes.js' );
+/* eslint no-underscore-dangle: "off" */
+
+// ## string
+
+// ### phonetize
+/**
+ *
+ * Phonetizes the input string using an algorithmic adaptation of Metaphone; It
+ * is not an exact implementation of Metaphone.
+ *
+ * @alias string#phonetize
+ * @param {string} word the input word.
+ * @return {string} phonetic code of `word`.
+ * @example
+ * phonetize( 'perspective' );
+ * // -> 'prspktv'
+ * phonetize( 'phenomenon' );
+ * // -> 'fnmnn'
+ */
+var phonetize = function ( word ) {
+  var p = word.toLowerCase();
+  // Remove repeating letters.
+  p = p.replace( phnrgx.repeatingChars, '$1');
+  // Drop first character of `kgknPairs`.
+  if ( phnrgx.kngnPairs.test( p ) ) {
+    p = p.substr( 1, p.length - 1 );
+  }
+  // Run Regex Express now!
+  p = p
+      // Change `ough` in the end as `f`,
+      .replace( phnrgx.ough, 'f' )
+      // Change `dg` to `j`, in `dge, dgi, dgy`.
+      .replace( phnrgx.dge, 'je' )
+      .replace( phnrgx.dgi, 'ji' )
+      .replace( phnrgx.dgy, 'jy' )
+      // Change `c` to `k` in `sch`
+      .replace( phnrgx.sch, 'sk' )
+      // Drop `c` in `sci, sce, scy`.
+      .replace( phnrgx.sci, 'si' )
+      .replace( phnrgx.sce, 'se' )
+      .replace( phnrgx.scy, 'sy' )
+      // Drop `t` if it appears as `tch`.
+      .replace( phnrgx.tch, 'ch' )
+      // Replace `tio & tia` by `sh`.
+      .replace( phnrgx.tio, 'sh' )
+      .replace( phnrgx.tia, 'sh' )
+      // Drop `b` if it appears as `mb` in the end.
+      .replace( phnrgx.mb_, 'm' )
+      // Drop `r` if it preceeds a vowel and not followed by a vowel or `y`
+      // .replace( rgx.vrnotvy, '$1$3' )
+      // Replace `c` by `s` in `ce, ci, cy`.
+      .replace( phnrgx.ce, 'se' )
+      .replace( phnrgx.ci, 'si' )
+      .replace( phnrgx.cy, 'sy' )
+      // Replace `cq` by `q`.
+      .replace( phnrgx.cq, 'q' )
+      // Replace `ck` by `k`.
+      .replace( phnrgx.ck, 'k' )
+      // Replace `ph` by `f`.
+      .replace( phnrgx.ph, 'f' )
+      // Replace `th` by `0` (theta look alike!).
+      .replace( phnrgx.th, '0' )
+      // Replace `c` by `k` if it is not followed by `h`.
+      .replace( phnrgx.cnoth, 'k$2' )
+      // Replace `q` by `k`.
+      .replace( phnrgx.q, 'k' )
+      // Replace `x` by `s` if it appears in the beginning.
+      .replace( phnrgx._x, 's' )
+      // Other wise replace `x` by `ks`.
+      .replace( phnrgx.x, 'ks' )
+      // Replace `sh, sia, sio` by `x`. Needs to be done post `x` processing!
+      .replace( phnrgx.sh, 'x' )
+      // Drop `y` if it is now followed by a **vowel**.
+      .replace( phnrgx.ynotv, '$2' )
+      .replace( phnrgx.y_, '' )
+      // Replace `z` by `s`.
+      .replace( phnrgx.z, 's' )
+      // Drop all **vowels** excluding the first one.
+      .replace( phnrgx.__vowels, '' );
+
+      return ( p );
+}; // phonetize()
+
+module.exports = phonetize;
+
+},{"./phonetize_regexes.js":13}],24:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### removeElisions
+/**
+ *
+ * Removes basic elisions found in the input string. Typical example of elisions
+ * are `it's, let's, where's, I'd, I'm, I'll, I've, and Isn't` etc. Note it retains
+ * apostrophe used to indicate possession.
+ *
+ * @alias string#removeElisions
+ * @param {string} str the input string.
+ * @return {string} input string after removal of elisions.
+ * @example
+ * removeElisions( "someone's wallet, isn't it?" );
+ * // -> "someone's wallet, is it?"
+ */
+var removeElisions = function ( str ) {
+  return ( str
+            .replace( rgx.elisionsSpl, '$2' )
+            .replace( rgx.elisions1, '$1' )
+            .replace( rgx.elisions2, '$1' )
+         );
+}; // removeElisions()
+
+module.exports = removeElisions;
+
+},{"./util_regexes.js":48}],25:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### removeExtraSpaces
+/**
+ *
+ * Removes leading, trailing and any extra in-between whitespaces from the input
+ * string.
+ *
+ * @alias string#removeExtraSpaces
+ * @param {string} str the input string.
+ * @return {string} input string after removal of leading, trailing and extra
+ * whitespaces.
+ * @example
+ * removeExtraSpaces( '   Padded   Text    ' );
+ * // -> 'Padded Text'
+ */
+var removeExtraSpaces = function ( str ) {
+  return ( str
+            .trim()
+            .replace( rgx.spaces, ' ')
+         );
+}; // removeExtraSpaces()
+
+module.exports = removeExtraSpaces;
+
+},{"./util_regexes.js":48}],26:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### removeHTMLTags
+/**
+ *
+ * Removes each HTML tag by replacing it with a whitespace.
+ *
+ * Extra spaces, if required, may be removed using [string.removeExtraSpaces](#stringremoveextraspaces)
+ * function.
+ *
+ * @alias string#removeHTMLTags
+ * @param {string} str the input string.
+ * @return {string} input string after removal of HTML tags.
+ * @example
+ * removeHTMLTags( '<p>Vive la France&nbsp;&#160;!</p>' );
+ * // -> ' Vive la France  ! '
+ */
+var removeHTMLTags = function ( str ) {
+  return ( str
+            .replace( rgx.htmlTags, ' ' )
+            .replace( rgx.htmlEscSeq1, ' ' )
+            .replace( rgx.htmlEscSeq2, ' ' )
+         );
+}; // removeHTMLTags()
+
+module.exports = removeHTMLTags;
+
+},{"./util_regexes.js":48}],27:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### removePunctuations
+/**
+ *
+ * Removes each punctuation mark by replacing it with a whitespace. It looks for
+ * the following punctuations — `.,;!?:"!'... - () [] {}`.
+ *
+ * Extra spaces, if required, may be removed using [string.removeExtraSpaces](#stringremoveextraspaces)
+ * function.
+ *
+ * @alias string#removePunctuations
+ * @param {string} str the input string.
+ * @return {string} input string after removal of punctuations.
+ * @example
+ * removePunctuations( 'Punctuations like "\'\',;!?:"!... are removed' );
+ * // -> 'Punctuations like               are removed'
+ */
+var removePunctuations = function ( str ) {
+  return str.replace( rgx.punctuations, ' ' );
+}; // removePunctuations()
+
+module.exports = removePunctuations;
+
+},{"./util_regexes.js":48}],28:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### removeSplChars
+/**
+ *
+ * Removes each special character by replacing it with a whitespace. It looks for
+ * the following special characters — `~@#%^*+=`.
+ *
+ * Extra spaces, if required, may be removed using [string.removeExtraSpaces](#stringremoveextraspaces)
+ * function.
+ *
+ * @alias string#removeSplChars
+ * @param {string} str the input string.
+ * @return {string} input string after removal of special characters.
+ * @example
+ * removeSplChars( '4 + 4*2 = 12' );
+ * // -> '4   4 2   12'
+ */
+var removeSplChars = function ( str ) {
+  return str.replace( rgx.splChars, ' ' );
+}; // removeSplChars()
+
+module.exports = removeSplChars;
+
+},{"./util_regexes.js":48}],29:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### retainAlphaNums
+/**
+ *
+ * Retains only apha, numerals, and removes all other characters from
+ * the input string, including leading, trailing and extra in-between
+ * whitespaces.
+ *
+ * @alias string#retainAlphaNums
+ * @param {string} str the input string.
+ * @return {string} input string after removal of non-alphanumeric characters,
+ * leading, trailing and extra whitespaces.
+ * @example
+ * retainAlphaNums( ' This, text here, has  (other) chars_! ' );
+ * // -> 'This text here has other chars'
+ */
+var retainAlphaNums = function ( str ) {
+  return ( str
+            .replace( rgx.notAlphaNumeric, ' ')
+            .replace( rgx.spaces, ' ')
+            .trim()
+          );
+}; // retainAlphaNums()
+
+module.exports = retainAlphaNums;
+
+},{"./util_regexes.js":48}],30:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+// Abbreviations with `.` but are never are EOS.
+const abbrvNoEOS = Object.create( null );
+abbrvNoEOS[ 'mr.' ] = true;
+abbrvNoEOS[ 'mrs.' ] = true;
+abbrvNoEOS[ 'ms.' ] = true;
+abbrvNoEOS[ 'er.' ] = true;
+abbrvNoEOS[ 'dr.' ] = true;
+abbrvNoEOS[ 'miss.' ] = true;
+abbrvNoEOS[ 'shri.' ] = true;
+abbrvNoEOS[ 'smt.' ] = true;
+abbrvNoEOS[ 'i.e.' ] = true;
+abbrvNoEOS[ 'ie.' ] = true;
+abbrvNoEOS[ 'e.g.' ] = true;
+abbrvNoEOS[ 'eg.' ] = true;
+abbrvNoEOS[ 'viz.' ] = true;
+abbrvNoEOS[ 'pvt.' ] = true;
+// et al.
+abbrvNoEOS[ 'et.' ] = true;
+abbrvNoEOS[ 'al.' ] = true;
+// Mount Kailash!
+abbrvNoEOS[ 'mt.' ] = true;
+// Pages!
+abbrvNoEOS[ 'pp.' ] = true;
+
+const abbrvMayBeEOS = Object.create( null );
+abbrvMayBeEOS[ 'inc.' ] = true;
+abbrvMayBeEOS[ 'ltd.' ] = true;
+abbrvMayBeEOS[ 'al.' ] = true;
+// Regex to test potential End-Of-Sentence.
+const rgxPotentialEOS = /\.$|\!$|\?$/;
+// Regex to test special cases of "I" at eos.
+const rgxSplI = /i\?$|i\!$/;
+// Regex to test first char as alpha only
+const rgxAlphaAt0 = /^[^a-z]/i;
+
+// ## string
+
+// ### sentences
+/**
+ *
+ * Detects the sentence boundaries in the input `paragraph` and splits it into
+ * an array of sentence(s).
+ *
+ * @alias string#sentences
+ * @param {string} paragraph the input string.
+ * @return {string[]} of sentences.
+ * @example
+ * sentences( 'AI Inc. is focussing on AI. I work for AI Inc. My mail is r2d2@yahoo.com' );
+ * // -> [ 'AI Inc. is focussing on AI.',
+ * //      'I work for AI Inc.',
+ * //      'My mail is r2d2@yahoo.com' ]
+ *
+ * sentences( 'U.S.A is my birth place. I was born on 06.12.1924. I climbed Mt. Everest.' );
+ * // -> [ 'U.S.A is my birth place.',
+ * //      'I was born on 06.12.1924.',
+ * //      'I climbed Mt. Everest.' ]
+ */
+var punkt = function ( paragraph ) {
+  // The basic idea is to split the paragraph on `spaces` and thereafter
+  // examine each word ending with an EOS punctuation for a possible EOS.
+
+  // Split on **space** to obtain all the `tokens` in the `para`.
+  const paraTokens = paragraph.split( ' ' );
+  var sentenceTokens = [];
+  var sentences = [];
+
+  for ( let k = 0; k < paraTokens.length; k += 1 ) {
+    // A para token.
+    const pt = paraTokens[ k ];
+    // A lower cased para token.
+    const lcpt = pt.toLowerCase();
+    if ( ( rgxPotentialEOS.test( pt ) ) && !abbrvNoEOS[ lcpt ] && ( pt.length !== 2 || rgxAlphaAt0.test( pt ) || rgxSplI.test( lcpt ) ) ) {
+      // Next para token that is non-blank.
+      let nextpt;
+      // Append this token to the current sentence tokens.
+      sentenceTokens.push( pt );
+      // If the current token is one of the abbreviations that may also mean EOS.
+      if ( abbrvMayBeEOS[ lcpt ] ) {
+        for ( let j = k + 1; j < paraTokens.length && !nextpt; j += 1 ) {
+          nextpt = paraTokens[ j ];
+        }
+      }
+      // If no next para token or if present then starts from a Cap Letter then
+      // only complete sentence and start a new one!
+      if ( nextpt === undefined || ( /^[A-Z]/ ).test( nextpt ) ) {
+        sentences.push( sentenceTokens.join( ' ' ) );
+        sentenceTokens = [];
+      }
+    } else sentenceTokens.push( pt );
+  }
+
+  if ( sentenceTokens.length > 0 ) sentences.push( sentenceTokens.join( ' ' ) );
+
+  return sentences;
+}; // punkt()
+
+module.exports = punkt;
+
+},{}],31:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### setOfChars
+/**
+ *
+ * Creates a set of chars from the input string `s`. This is useful
+ * in even more aggressive string matching using Jaccard or Tversky compared to
+ * `marker()`. It also has an alias **`soc()`**.
+ *
+ * @alias string#setOfChars
+ * @param {string} str the input string.
+ * @param {function} [ifn=undefined] a function to build index; it receives the first
+ * character of `str` and the `idx` as input arguments. The `build()` function of
+ * [helper.returnIndexer](#helperreturnindexer) may be used as `ifn`. If `undefined`
+ * then index is not built.
+ * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
+ * function.
+ * @return {string} the soc.
+ * @example
+ * setOfChars( 'the quick brown fox jumps over the lazy dog' );
+ * // -> ' abcdefghijklmnopqrstuvwxyz'
+ */
+var setOfChars = function ( str, ifn, idx ) {
+  var cset = new Set( str );
+  if ( typeof ifn === 'function' ) {
+      ifn( str[ 0 ], idx );
+  }
+  return ( cset );
+}; // soc()
+
+module.exports = setOfChars;
+
+},{}],32:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### setOfNGrams
+/**
+ *
+ * Generates the set of ngrams of `size` from the input string. The
+ * default size is 2, which means it will generate set of bigrams by default.
+ * It also has an alias **`song()`**.
+ *
+ * @alias string#setOfNGrams
+ * @param {string} str the input string.
+ * @param {number} [size=2] ngram size.
+ * @param {function} [ifn=undefined] a function to build index; it is called for
+ * every **unique occurrence of ngram** of `str`; and it receives the ngram and the `idx`
+ * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
+ * may be used as `ifn`. If `undefined` then index is not built.
+ * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
+ * function.
+ * @return {set} of ngrams of `size` of `str`.
+ * @example
+ * setOfNGrams( 'mama' );
+ * // -> Set { 'ma', 'am' }
+ * song( 'mamma' );
+ * // -> Set { 'ma', 'am', 'mm' }
+ */
+var setOfNGrams = function ( str, size, ifn, idx ) {
+  var ng = ( size || 2 ),
+      ngSet = new Set(),
+      tg;
+  for ( var i = 0, imax = str.length; i < imax; i += 1 ) {
+    tg = str.slice( i, i + ng );
+    if ( tg.length === ng ) {
+      if ( ( typeof ifn === 'function' ) && !ngSet.has( tg ) ) {
+          ifn( tg, idx );
+      }
+      ngSet.add( tg );
+    }
+  }
+  return ( ngSet );
+}; // song()
+
+module.exports = setOfNGrams;
+
+},{}],33:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var sndx = require( 'wink-distance/src/soundex.js' );
+
+// ## string
+
+// ### soundex
+/**
+ *
+ * Produces the soundex code from the input `word`.
+ *
+ * @alias string#soundex
+ * @param {string} word the input word.
+ * @param {number} [maxLength=4] of soundex code to be returned.
+ * @return {string} soundex code of `word`.
+ * @example
+ * soundex( 'Burroughs' );
+ * // -> 'B620'
+ * soundex( 'Burrows' );
+ * // -> 'B620'
+ */
+var soundex = function ( word, maxLength ) {
+  return sndx( word, maxLength );
+}; // soundex()
+
+module.exports = soundex;
+
+},{"wink-distance/src/soundex.js":4}],34:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### splitElisions
+/**
+ *
+ * Splits basic elisions found in the input string. Typical example of elisions
+ * are `it's, let's, where's, I'd, I'm, I'll, I've, and Isn't` etc. Note it does
+ * not touch apostrophe used to indicate possession.
+ *
+ * @alias string#splitElisions
+ * @param {string} str the input string.
+ * @return {string} input string after splitting of elisions.
+ * @example
+ * splitElisions( "someone's wallet, isn't it?" );
+ * // -> "someone's wallet, is n't it?"
+ */
+var splitElisions = function ( str ) {
+  return ( str
+            .replace( rgx.elisionsSpl, '$2 $3' )
+            .replace( rgx.elisions1, '$1 $2' )
+            .replace( rgx.elisions2, '$1 $2' )
+         );
+}; // splitElisions()
+
+module.exports = splitElisions;
+
+},{"./util_regexes.js":48}],35:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var winkTokenize = require( 'wink-tokenizer' )().tokenize;
+
+// ## string
+
+// ### tokenize
+/**
+ *
+ * Tokenizes the input `sentence` according to the value of `detailed` flag.
+ * Any occurance of `...` in the `sentence` is
+ * converted to ellipses. In `detailed = true` mode, it
+ * tags every token with its type; the supported tags are currency, email,
+ * emoji, emoticon, hashtag, number, ordinal, punctuation, quoted_phrase, symbol,
+ * time, mention, url, and word.
+ *
+ * @alias string#tokenize
+ * @param {string} sentence the input string.
+ * @param {boolean} [detailed=false] if true, each token is a object cotaining
+ * `value` and `tag` of each token; otherwise each token is a string. It's default
+ * value of **false** ensures compatibility with previous version.
+ * @return {(string[]|object[])} an array of strings if `detailed` is false otherwise
+ * an array of objects.
+ * @example
+ * tokenize( "someone's wallet, isn't it? I'll return!" );
+ * // -> [ 'someone', '\'s', 'wallet', ',', 'is', 'n\'t', 'it', '?',
+ * //      'I', '\'ll', 'return', '!' ]
+ *
+ * tokenize( 'For details on wink, check out http://winkjs.org/ URL!', true );
+ * // -> [ { value: 'For', tag: 'word' },
+ * //      { value: 'details', tag: 'word' },
+ * //      { value: 'on', tag: 'word' },
+ * //      { value: 'wink', tag: 'word' },
+ * //      { value: ',', tag: 'punctuation' },
+ * //      { value: 'check', tag: 'word' },
+ * //      { value: 'out', tag: 'word' },
+ * //      { value: 'http://winkjs.org/', tag: 'url' },
+ * //      { value: 'URL', tag: 'word' },
+ * //      { value: '!', tag: 'punctuation' } ]
+ */
+var tokenize = function ( sentence, detailed ) {
+  var tokens = winkTokenize( sentence.replace( '...', '…' ) );
+  var i;
+  if ( !detailed ) {
+    for ( i = 0; i < tokens.length; i += 1 ) tokens[ i ] = tokens[ i ].value;
+  }
+
+  return tokens;
+}; // tokenize()
+
+module.exports = tokenize;
+
+},{"wink-tokenizer":7}],36:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var removeElisions = require( './string-remove-elisions.js' );
+var amplifyNotElision = require( './string-amplify-not-elision.js' );
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### tokenize0
+/**
+ *
+ * Tokenizes by splitting the input string on **non-words**. This means tokens would
+ * consists of only alphas, numerals and underscores; all other characters will
+ * be stripped as they are treated as separators. It also removes all elisions;
+ * however negations are retained and amplified.
+ *
+ * @alias string#tokenize0
+ * @param {string} str the input string.
+ * @return {string[]} of tokens.
+ * @example
+ * tokenize0( "someone's wallet, isn't it?" );
+ * // -> [ 'someone', 's', 'wallet', 'is', 'not', 'it' ]
+ */
+var tokenize0 = function ( str ) {
+  var tokens = removeElisions( amplifyNotElision( str ) )
+                .replace( rgx.cannot, '$1 $2' )
+                .split( rgx.nonWords );
+  // Check the 0th and last element of array for empty string because if
+  // fisrt/last characters are non-words then these will be empty stings!
+  if ( tokens[ 0 ] === '' ) tokens.shift();
+  if ( tokens[ tokens.length - 1 ] === '' ) tokens.pop();
+  return tokens;
+}; // tokenize0()
+
+module.exports = tokenize0;
+
+},{"./string-amplify-not-elision.js":14,"./string-remove-elisions.js":24,"./util_regexes.js":48}],37:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### trim
+/**
+ *
+ * Trims leading and trailing whitespaces from the input string.
+ *
+ * @alias string#trim
+ * @param {string} str the input string.
+ * @return {string} input string with leading & trailing whitespaces removed.
+ * @example
+ * trim( '  Padded   ' );
+ * // -> 'Padded'
+ */
+var trim = function ( str ) {
+  return ( str.trim() );
+}; // trim()
+
+module.exports = trim;
+
+},{}],38:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### upperCase
+/**
+ *
+ * Converts the input string to upper case.
+ *
+ * @alias string#upperCase
+ * @param {string} str the input string.
+ * @return {string} input string in upper case.
+ * @example
+ * upperCase( 'Upper Case' );
+ * // -> 'UPPER CASE'
+ */
+var upperCase = function ( str ) {
+  return ( str.toUpperCase() );
+}; // upperCase()
+
+module.exports = upperCase;
+
+},{}],39:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## tokens
+
+// ### appendBigrams
+/**
+ *
+ * Generates bigrams from the input tokens and appends them to the input tokens.
+ *
+ * @alias tokens#appendBigrams
+ * @param {string[]} tokens the input tokens.
+ * @return {string[]} the input tokens appended with their bigrams.
+ * @example
+ * appendBigrams( [ 'he', 'acted', 'decisively', 'today' ] );
+ * // -> [ 'he',
+ * //      'acted',
+ * //      'decisively',
+ * //      'today',
+ * //      'he_acted',
+ * //      'acted_decisively',
+ * //      'decisively_today' ]
+ */
+var appendBigrams = function ( tokens ) {
+  var i, imax;
+  for ( i = 0, imax = tokens.length - 1; i < imax; i += 1 ) {
+    tokens.push( tokens[ i ] + '_' + tokens[ i + 1 ] );
+  }
+  return tokens;
+}; // appendBigrams()
+
+module.exports = appendBigrams;
+
+},{}],40:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## tokens
+
+// ### bigrams
+/**
+ *
+ * Generates bigrams from the input tokens.
+ *
+ * @alias tokens#bigrams
+ * @param {string[]} tokens the input tokens.
+ * @return {string[]} the bigrams.
+ * @example
+ * bigrams( [ 'he', 'acted', 'decisively', 'today' ] );
+ * // -> [ [ 'he', 'acted' ],
+ * //      [ 'acted', 'decisively' ],
+ * //      [ 'decisively', 'today' ] ]
+ */
+var bigrams = function ( tokens ) {
+  // Bigrams will be stored here.
+  var bgs = [];
+  // Helper variables.
+  var i, imax;
+  // Create bigrams.
+  for ( i = 0, imax = tokens.length - 1; i < imax; i += 1 ) {
+    bgs.push( [ tokens[ i ], tokens[ i + 1 ] ] );
+  }
+  return bgs;
+}; // bigrams()
+
+module.exports = bigrams;
+
+},{}],41:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### bagOfWords
+/**
+ *
+ * Generates the bag of words from the input string. By default it
+ * uses `word count` as it's frequency; but if `logCounts` parameter is set to true then
+ * it will use `log2( word counts + 1 )` as it's frequency. It also has an alias **`bow()`**.
+ *
+ * @alias tokens#bagOfWords
+ * @param {string[]} tokens the input tokens.
+ * @param {number} [logCounts=false] a true value flags the use of `log2( word count + 1 )`
+ * instead of just `word count` as frequency.
+ * @param {function} [ifn=undefined] a function to build index; it is called for
+ * every **unique occurrence of word** in `tokens`; and it receives the word and the `idx`
+ * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
+ * may be used as `ifn`. If `undefined` then index is not built.
+ * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
+ * function.
+ * @return {object} bag of words from tokens.
+ * @example
+ * bagOfWords( [ 'rain', 'rain', 'go', 'away' ] );
+ * // -> { rain: 2, go: 1, away: 1 }
+ * bow( [ 'rain', 'rain', 'go', 'away' ], true );
+ * // -> { rain: 1.584962500721156, go: 1, away: 1 }
+ */
+var bagOfWords = function ( tokens, logCounts, ifn, idx ) {
+  var bow1 = Object.create( null ),
+      i, imax,
+      token,
+      words;
+  for ( i = 0, imax = tokens.length; i < imax; i += 1 ) {
+    token = tokens[ i ];
+    if ( ( typeof ifn === 'function' ) && !bow1[ token ] ) {
+        ifn( token, idx );
+    }
+    bow1[ token ] = 1 + ( bow1[ token ] || 0 );
+  }
+  if ( !logCounts ) return ( bow1 );
+  words = Object.keys( bow1 );
+  for ( i = 0, imax = words.length; i < imax; i += 1 ) {
+    // Add `1` to ensure non-zero count! (Note: log2(1) is 0)
+    bow1[ words[ i ] ] = Math.log2( bow1[ words[ i ] ] + 1 );
+  }
+  return ( bow1 );
+}; // bow()
+
+module.exports = bagOfWords;
+
+},{}],42:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var stringPhonetize = require( './string-phonetize.js' );
+
+// ## tokens
+
+// ### phonetize
+/**
+ *
+ * Phonetizes input tokens using using an algorithmic adaptation of Metaphone.
+ *
+ * @alias tokens#phonetize
+ * @param {string[]} tokens the input tokens.
+ * @return {string[]} phonetized tokens.
+ * @example
+ * phonetize( [ 'he', 'acted', 'decisively', 'today' ] );
+ * // -> [ 'h', 'aktd', 'dssvl', 'td' ]
+ */
+var phonetize = function ( tokens ) {
+  return tokens.map( stringPhonetize );
+}; // phonetize()
+
+module.exports = phonetize;
+
+},{"./string-phonetize.js":23}],43:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = require( './util_regexes.js' );
+
+// ## string
+
+// ### propagateNegations
+/**
+ *
+ * It looks for negation tokens in the input array of tokens and propagates
+ * negation to subsequent `upto` tokens by prefixing them by a `!`. It is useful
+ * in handling text containing negations during tasks like similarity detection,
+ * classification or search.
+ *
+ * @alias tokens#propagateNegations
+ * @param {string[]} tokens the input tokens.
+ * @param {number} [upto=2] number of tokens to be negated after the negation
+ * token. Note, tokens are only negated either `upto` tokens or up to the token
+ * preceeding the **`, . ; : ! ?`** punctuations.
+ * @return {string[]} tokens with negation propagated.
+ * @example
+ * propagateNegations( [ 'mary', 'is', 'not', 'feeling', 'good', 'today' ] );
+ * // -> [ 'mary', 'is', 'not', '!feeling', '!good', 'today' ]
+ */
+var propagateNegations = function ( tokens, upto ) {
+  var i, imax, j, jmax;
+  var tkns = tokens;
+  var limit = upto || 2;
+  for ( i = 0, imax = tkns.length; i < imax; i += 1 ) {
+    if ( rgx.negations.test( tkns[ i ] ) ) {
+      for ( j = i + 1, jmax = Math.min( imax, i + limit + 1 ); j < jmax; j += 1 ) {
+        // Hit a punctuation mark, break out of the loop otherwise go *upto the limit*.
+        // > TODO: promote to utilities regex, after test cases have been added.
+        if ( ( /[\,\.\;\:\!\?]/ ).test( tkns[ j ] ) ) break;
+        // Propoage negation: invert the token by prefixing a `!` to it.
+        tkns[ j ] = '!' + tkns[ j ];
+      }
+      i = j;
+    }
+  }
+  return tkns;
+}; // propagateNegations()
+
+module.exports = propagateNegations;
+
+},{"./util_regexes.js":48}],44:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+var defaultStopWords = require( './dictionaries/stop_words.json' );
+var words = require( './helper-return-words-filter.js' );
+defaultStopWords = words( defaultStopWords );
+
+// ## tokens
+
+// ### removeWords
+/**
+ *
+ * Removes the stop words from the input array of tokens.
+ *
+ * @alias tokens#removeWords
+ * @param {string[]} tokens the input tokens.
+ * @param {wordsFilter} [stopWords=defaultStopWords] default stop words are
+ * loaded from `stop_words.json` located under the `src/dictionaries/` directory.
+ * Custom stop words can be created using [helper.returnWordsFilter ](#helperreturnwordsfilter).
+ * @return {string[]} balance tokens.
+ * @example
+ * removeWords( [ 'this', 'is', 'a', 'cat' ] );
+ * // -> [ 'cat' ]
+ */
+var removeWords = function ( tokens, stopWords ) {
+  var givenStopWords = ( stopWords || defaultStopWords );
+  return tokens.filter( givenStopWords.exclude );
+}; // removeWords()
+
+module.exports = removeWords;
+
+},{"./dictionaries/stop_words.json":8,"./helper-return-words-filter.js":11}],45:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var stringSoundex = require( './string-soundex.js' );
+
+// ## tokens
+
+// ### soundex
+/**
+ *
+ * Generates the soundex coded tokens from the input tokens.
+ *
+ * @alias tokens#soundex
+ * @param {string[]} tokens the input tokens.
+ * @return {string[]} soundex coded tokens.
+ * @example
+ * soundex( [ 'he', 'acted', 'decisively', 'today' ] );
+ * // -> [ 'H000', 'A233', 'D221', 'T300' ]
+ */
+var soundex = function ( tokens ) {
+  // Need to send `maxLength` as `undefined`.
+  return tokens.map( ( t ) => stringSoundex( t ) );
+}; // soundex()
+
+module.exports = soundex;
+
+},{"./string-soundex.js":33}],46:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+
+// ## string
+
+// ### setOfWords
+/**
+ *
+ * Generates the set of words from the input string. It also has an alias **`sow()`**.
+ *
+ * @alias tokens#setOfWords
+ * @param {string[]} tokens the input tokens.
+ * @param {function} [ifn=undefined] a function to build index; it is called for
+ * every **member word of the set **; and it receives the word and the `idx`
+ * as input arguments. The `build()` function of [helper.returnIndexer](#helperreturnindexer)
+ * may be used as `ifn`. If `undefined` then index is not built.
+ * @param {number} [idx=undefined] the index; passed as the second argument to the `ifn`
+ * function.
+ * @return {set} of words from tokens.
+ * @example
+ * setOfWords( [ 'rain', 'rain', 'go', 'away' ] );
+ * // -> Set { 'rain', 'go', 'away' }
+ */
+var setOfWords = function ( tokens, ifn, idx ) {
+  var tset = new Set( tokens );
+  if ( typeof ifn === 'function' ) {
+    tset.forEach( function ( m ) {
+        ifn( m, idx );
+    } );
+  }
+  return ( tset );
+}; // bow()
+
+module.exports = setOfWords;
+
+},{}],47:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var porter2Stemmer = require( 'wink-porter2-stemmer' );
+
+// ## tokens
+
+// ### stem
+/**
+ *
+ * Stems input tokens using Porter Stemming Algorithm Version 2.
+ *
+ * @alias tokens#stem
+ * @param {string[]} tokens the input tokens.
+ * @return {string[]} stemmed tokens.
+ * @example
+ * stem( [ 'he', 'acted', 'decisively', 'today' ] );
+ * // -> [ 'he', 'act', 'decis', 'today' ]
+ */
+var stem = function ( tokens ) {
+  return tokens.map( porter2Stemmer );
+}; // stem()
+
+module.exports = stem;
+
+},{"wink-porter2-stemmer":50}],48:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var rgx = Object.create( null );
+
+// Matches standard english punctuations in a text.
+rgx.punctuations = /[\’\'\‘\’\`\“\”\"\[\]\(\)\{\}\…\,\.\!\;\?\/\-\:]/ig;
+// End Of Sentence Punctuations - useful for splitting text into sentences.
+rgx.eosPunctuations = /([\.\?\!])\s*(?=[a-z]|\s+\d)/gi;
+
+// Matches special characters: `* + % # @ ^ = ~ | \` in a text.
+rgx.splChars = /[\*\+\%\#\@\^\=\~\|\\]/ig;
+
+// Matches common english elisions including n't.
+// These are special ones as 's otherwise may be apostrophe!
+rgx.elisionsSpl = /(\b)(it|let|that|who|what|here|there|when|where|why|how)(\'s)\b/gi;
+// Single (1) character elisions.
+rgx.elisions1 = /([a-z])(\'d|\'m)\b/gi;
+// Two (2) character elisions.
+rgx.elisions2 = /([a-z])(\'ll|\'ve|\'re|n\'t)\b/gi;
+// Sperate not elision 'nt.
+rgx.notElision = /([a-z])(n\'t)\b/gi;
+// Specially handle cannot
+rgx.cannot = /\b(can)(not)\b/gi;
+
+// Matches space, tab, or new line characters in text.
+rgx.spaces = /\s+/ig;
+// Matches anything other than space, tab, or new line characters.
+rgx.notSpace = /\S/g;
+// Matches alpha and space characters in a text.
+rgx.alphaSpace = /[a-z\s]/ig;
+// Matches alphanumerals and space characters in a text.
+rgx.alphaNumericSpace = /[a-z0-9\s]/ig;
+// Matches non alpha characters in a text.
+rgx.notAlpha = /[^a-z]/ig;
+// Matches non alphanumerals in a text.
+rgx.notAlphaNumeric = /[^a-z0-9]/ig;
+// Matches one or more non-words characters.
+rgx.nonWords = /\W+/ig;
+// Matches complete negation token
+rgx.negations = /^(never|none|not|no)$/i;
+
+// Matches run of capital words in a text.
+rgx.rocWords = /(?:\b[A-Z][A-Za-z]*\s*){2,}/g;
+
+// Matches integer, decimal, JS floating point numbers in a text.
+rgx.number = /[0-9]*\.[0-9]+e[\+\-]{1}[0-9]+|[0-9]*\.[0-9]+|[0-9]+/ig;
+
+// Matches time in 12 hour am/pm format in a text.
+rgx.timeIn12HrAMPM = /(?:[0-9]|0[0-9]|1[0-2])((:?:[0-5][0-9])){0,1}\s?(?:[aApP][mM])/ig;
+
+// Matches HTML tags - in fact any thing enclosed in angular brackets including
+// the brackets.
+rgx.htmlTags = /(?:<[^>]*>)/g;
+// Matches the HTML Esc Sequences
+// Esc Seq of type `&lt;` or `&nbsp;`
+rgx.htmlEscSeq1 = /(?:&[a-z]{2,6};)/gi;
+// Esc Seq of type `&#32;`
+rgx.htmlEscSeq2 = /(?:&#[0-9]{2,4};)/gi;
+
+// Tests if a given string is possibly in the Indian mobile telephone number format.
+rgx.mobileIndian = /^(0|\+91)?[789]\d{9}$/;
+// Tests if a given string is in the valid email format.
+rgx.email = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+// Extracts any number and text from a <number><text> format text.
+// Useful in extracting value and UoM from strings like `2.7 Kgs`.
+rgx.separateNumAndText = /([0-9]*\.[0-9]+e[\+\-]{1}[0-9]+|[0-9]*\.[0-9]+|[0-9]+)[\s]*(.*)/i;
+
+// Crude date parser for a string containg date in a valid format.
+// > TODO: Need to improve this one!
+rgx.date = /(\d+)/ig;
+
+// Following 3 regexes are specially coded for `tokenize()` in prepare_text.
+// Matches punctuations that are not a part of a number.
+rgx.nonNumPunctuations = /[\.\,\-](?=\D)/gi;
+rgx.otherPunctuations = /[\’\'\‘\’\`\“\”\"\[\]\(\)\{\}\…\!\;\?\/\:]/ig;
+// > TODO: Add more currency symbols here.
+rgx.currency = /[\$\£\¥\€]/ig;
+
+//
+module.exports = rgx;
+
+},{}],49:[function(require,module,exports){
+//     wink-nlp-utils
+//     NLP Functions for amplifying negations, managing elisions,
+//     creating ngrams, stems, phonetic codes to tokens and more.
+//
+//     Copyright (C) 2017-19  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-nlp-utils”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+//
+var porter2Stemmer = require( 'wink-porter2-stemmer' );
+
+// ### Prepare Name Space
+
+// Create prepare name space.
+var prepare = Object.create( null );
+
+/**
+ * Helper
+ * @namespace helper
+ */
+prepare.helper = Object.create( null );
+
+// Words
+prepare.helper.returnWordsFilter = require( './helper-return-words-filter.js' );
+prepare.helper.words = prepare.helper.returnWordsFilter;
+// Make better **alias** name for the `word()` function.
+
+// Index
+prepare.helper.index = require( './helper-return-indexer.js' );
+// Make better **alias** name for the `index()` function.
+prepare.helper.returnIndexer = prepare.helper.index;
+
+// Return Quoted Text Extractor
+prepare.helper.returnQuotedTextExtractor = require( './helper-return-quoted-text-extractor.js' );
+
+/**
+ * String
+ * @namespace string
+ */
+prepare.string = Object.create( null );
+
+// Lower Case
+prepare.string.lowerCase = require( './string-lower-case.js' );
+// Upper Case
+prepare.string.upperCase = require( './string-upper-case.js' );
+// Trim
+prepare.string.trim = require( './string-trim.js' );
+// Remove Extra Spaces
+prepare.string.removeExtraSpaces = require( './string-remove-extra-spaces.js' );
+// Retain Alpha-numerics
+prepare.string.retainAlphaNums = require( './string-retain-alpha-nums.js' );
+// Extract Person's Name
+prepare.string.extractPersonsName = require( './string-extract-persons-name.js' );
+// Extract Run of Capital Words
+prepare.string.extractRunOfCapitalWords = require( './string-extract-run-of-capital-words.js' );
+// Remove Punctuations
+prepare.string.removePunctuations = require( './string-remove-punctuations.js' );
+// Remove Special Chars
+prepare.string.removeSplChars = require( './string-remove-spl-chars.js' );
+// Remove HTML Tags
+prepare.string.removeHTMLTags = require( './string-remove-html-tags.js' );
+// Remove Elisions
+prepare.string.removeElisions = require( './string-remove-elisions.js' );
+// Split Elisions
+prepare.string.splitElisions = require( './string-split-elisions.js' );
+// Amplify Not Elision
+prepare.string.amplifyNotElision = require( './string-amplify-not-elision' );
+// Marker
+prepare.string.marker = require( './string-marker.js' );
+// SOC
+prepare.string.soc = require( './string-soc.js' );
+prepare.string.setOfChars = require( './string-soc.js' );
+// NGrams
+prepare.string.ngrams = require( './string-ngram.js' );
+// Edge NGrams
+prepare.string.edgeNGrams = require( './string-edge-ngrams.js' );
+// BONG
+prepare.string.bong = require( './string-bong.js' );
+prepare.string.bagOfNGrams = require( './string-bong.js' );
+// SONG
+prepare.string.song = require( './string-song.js' );
+prepare.string.setOfNGrams = require( './string-song.js' );
+// Sentences
+prepare.string.sentences = require( './string-sentences.js' );
+// Compose Corpus
+prepare.string.composeCorpus = require( './string-compose-corpus.js' );
+// Tokenize0
+prepare.string.tokenize0 = require( './string-tokenize0.js' );
+// Tokenize
+prepare.string.tokenize = require( './string-tokenize.js' );
+// #### Stem
+prepare.string.stem = porter2Stemmer;
+// Phonetize
+prepare.string.phonetize = require( './string-phonetize.js' );
+// Soundex
+prepare.string.soundex = require( './string-soundex.js' );
+
+/**
+ * Tokens
+ * @namespace tokens
+ */
+prepare.tokens = Object.create( null );
+
+// Stem
+prepare.tokens.stem = require( './tokens-stem.js' );
+// Phonetize
+prepare.tokens.phonetize = require( './tokens-phonetize.js' );
+// Soundex
+prepare.tokens.soundex = require( './tokens-soundex.js' );
+// Remove Words
+prepare.tokens.removeWords = require( './tokens-remove-words.js' );
+// BOW
+prepare.tokens.bow = require( './tokens-bow.js' );
+prepare.tokens.bagOfWords = require( './tokens-bow.js' );
+// SOW
+prepare.tokens.sow = require( './tokens-sow.js' );
+prepare.tokens.setOfWords = require( './tokens-sow.js' );
+// Propagate Negations
+prepare.tokens.propagateNegations = require( './tokens-propagate-negations.js' );
+// Bigrams
+prepare.tokens.bigrams = require( './tokens-bigrams.js' );
+// Append Bigrams
+prepare.tokens.appendBigrams = require( './tokens-append-bigrams.js' );
+
+// Export prepare.
+module.exports = prepare;
+
+},{"./helper-return-indexer.js":9,"./helper-return-quoted-text-extractor.js":10,"./helper-return-words-filter.js":11,"./string-amplify-not-elision":14,"./string-bong.js":15,"./string-compose-corpus.js":16,"./string-edge-ngrams.js":17,"./string-extract-persons-name.js":18,"./string-extract-run-of-capital-words.js":19,"./string-lower-case.js":20,"./string-marker.js":21,"./string-ngram.js":22,"./string-phonetize.js":23,"./string-remove-elisions.js":24,"./string-remove-extra-spaces.js":25,"./string-remove-html-tags.js":26,"./string-remove-punctuations.js":27,"./string-remove-spl-chars.js":28,"./string-retain-alpha-nums.js":29,"./string-sentences.js":30,"./string-soc.js":31,"./string-song.js":32,"./string-soundex.js":33,"./string-split-elisions.js":34,"./string-tokenize.js":35,"./string-tokenize0.js":36,"./string-trim.js":37,"./string-upper-case.js":38,"./tokens-append-bigrams.js":39,"./tokens-bigrams.js":40,"./tokens-bow.js":41,"./tokens-phonetize.js":42,"./tokens-propagate-negations.js":43,"./tokens-remove-words.js":44,"./tokens-soundex.js":45,"./tokens-sow.js":46,"./tokens-stem.js":47,"wink-porter2-stemmer":50}],50:[function(require,module,exports){
+//     wink-porter2-stemmer
+//     Implementation of Porter Stemmer Algorithm V2 by Dr Martin F Porter
+//
+//     Copyright (C) 2017-18  GRAYPE Systems Private Limited
+//
+//     This file is part of “wink-porter2-stemmer”.
+//
+//     Permission is hereby granted, free of charge, to any person obtaining a
+//     copy of this software and associated documentation files (the "Software"),
+//     to deal in the Software without restriction, including without limitation
+//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
+//     and/or sell copies of the Software, and to permit persons to whom the
+//     Software is furnished to do so, subject to the following conditions:
+//
+//     The above copyright notice and this permission notice shall be included
+//     in all copies or substantial portions of the Software.
+//
+//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+//     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+//     DEALINGS IN THE SOFTWARE.
+
+// Implements the Porter Stemmer Algorithm V2 by Dr Martin F Porter.
+// Reference: https://snowballstem.org/algorithms/english/stemmer.html
+
+// ## Regex Definitions
+
+// Regex definition of `double`.
+var rgxDouble = /(bb|dd|ff|gg|mm|nn|pp|rr|tt)$/;
+// Definition for Step Ia suffixes.
+var rgxSFXsses = /(.+)(sses)$/;
+var rgxSFXiedORies2 = /(.{2,})(ied|ies)$/;
+var rgxSFXiedORies1 = /(.{1})(ied|ies)$/;
+var rgxSFXusORss = /(.+)(us|ss)$/;
+var rgxSFXs = /(.+)(s)$/;
+// Definition for Step Ib suffixes.
+var rgxSFXeedlyOReed = /(.*)(eedly|eed)$/;
+var rgxSFXedORedlyORinglyORing = /([aeiouy].*)(ed|edly|ingly|ing)$/;
+var rgxSFXatORblORiz = /(at|bl|iz)$/;
+// Definition for Step Ic suffixes.
+var rgxSFXyOR3 = /(.+[^aeiouy])([y3])$/;
+// Definition for Step II suffixes; note we have spot the longest suffix.
+var rgxSFXstep2 = /(ization|ational|fulness|ousness|iveness|tional|biliti|lessli|entli|ation|alism|aliti|ousli|iviti|fulli|enci|anci|abli|izer|ator|alli|bli|ogi|li)$/;
+var rgxSFXstep2WithReplacements = [
+  // Length 7.
+  { rgx: /ational$/, replacement: 'ate' },
+  { rgx: /ization$/, replacement: 'ize' },
+  { rgx: /fulness$/, replacement: 'ful' },
+  { rgx: /ousness$/, replacement: 'ous' },
+  { rgx: /iveness$/, replacement: 'ive' },
+  // Length 6.
+  { rgx: /tional$/, replacement: 'tion' },
+  { rgx: /biliti$/, replacement: 'ble' },
+  { rgx: /lessli$/, replacement: 'less' },
+  // Length 5.
+  { rgx: /iviti$/, replacement: 'ive' },
+  { rgx: /ousli$/, replacement: 'ous' },
+  { rgx: /ation$/, replacement: 'ate' },
+  { rgx: /entli$/, replacement: 'ent' },
+  { rgx: /(.*)(alism|aliti)$/, replacement: '$1al' },
+  { rgx: /fulli$/, replacement: 'ful' },
+  // Length 4.
+  { rgx: /alli$/, replacement: 'al' },
+  { rgx: /ator$/, replacement: 'ate' },
+  { rgx: /izer$/, replacement: 'ize' },
+  { rgx: /enci$/, replacement: 'ence' },
+  { rgx: /anci$/, replacement: 'ance' },
+  { rgx: /abli$/, replacement: 'able' },
+  // Length 3.
+  { rgx: /bli$/, replacement: 'ble' },
+  { rgx: /(.*)(l)(ogi)$/, replacement: '$1$2og' },
+  // Length 2.
+  { rgx: /(.*)([cdeghkmnrt])(li)$/, replacement: '$1$2' }
+];
+// Definition for Step III suffixes; once again spot the longest one first!
+var rgxSFXstep3 = /(ational|tional|alize|icate|iciti|ative|ical|ness|ful)$/;
+var rgxSFXstep3WithReplacements = [
+  { rgx: /ational$/, replacement: 'ate' },
+  { rgx: /tional$/, replacement: 'tion' },
+  { rgx: /alize$/, replacement: 'al' },
+  { rgx: /(.*)(icate|iciti|ical)$/, replacement: '$1ic' },
+  { rgx: /(ness|ful)$/, replacement: '' },
+];
+// Definition for Step IV suffixes.
+var rgxSFXstep4 = /(ement|ance|ence|able|ible|ment|ant|ent|ism|ate|iti|ous|ive|ize|al|er|ic)$/;
+var rgxSFXstep4Full = /(ement|ance|ence|able|ible|ment|ant|ent|ism|ate|iti|ous|ive|ize|ion|al|er|ic)$/;
+var rgxSFXstep4ion = /(.*)(s|t)(ion)$/;
+// Exceptions Set I.
+var exceptions1 = {
+  // Mapped!
+  'skis': 'ski',
+  'skies': 'sky',
+  'dying': 'die',
+  'lying': 'lie',
+  'tying': 'tie',
+  'idly': 'idl',
+  'gently': 'gentl',
+  'ugly': 'ugli',
+  'early': 'earli',
+  'only': 'onli',
+  'singly': 'singl',
+  // Invariants!
+  'sky': 'sky',
+  'news': 'news',
+  'atlas': 'atlas',
+  'cosmos': 'cosmos',
+  'bias': 'bias',
+  'andes': 'andes'
+};
+// Exceptions Set II.
+// Note, these are to be treated as full words.
+var rgxException2 = /^(inning|outing|canning|herring|proceed|exceed|succeed|earring)$/;
+
+// ## Private functions
+
+// ### prelude
+/**
+ * Performs initial pre-processing by transforming the input string `s` as
+ * per the replacements.
+ *
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var prelude = function ( s ) {
+  return ( s
+            // Handle `y`'s.
+            .replace( /^y/, '3' )
+            .replace( /([aeiou])y/, '$13' )
+            // Handle apostrophe.
+            .replace( /\’s$|\'s$/, '' )
+            .replace( /s\’$|s\'$/, '' )
+            .replace( /[\’\']$/, '' )
+         );
+}; // prelude()
+
+// ### isShort
+/**
+ * @param {String} s Input string
+ * @return {Boolean} `true` if `s` is a short syllable, `false` otherwise
+ * @private
+ */
+var isShort = function ( s ) {
+  // (a) a vowel followed by a non-vowel other than w, x or 3 and
+  // preceded by a non-vowel, **or** (b) a vowel at the beginning of the word
+  // followed by a non-vowel.
+  return (
+    (
+      (
+        ( /[^aeiouy][aeiouy][^aeiouywx3]$/ ).test( s ) ||
+        ( /^[aeiouy][^aeiouy]{0,1}$/ ).test( s ) // Removed this new changed??
+      )
+    )
+  );
+}; // isShort()
+
+// ### markRegions
+/**
+ * @param {String} s Input string
+ * @return {Object} the `R1` and `R2` regions as an object from the input string `s`.
+ * @private
+ */
+var markRegions = function ( s ) {
+  // Matches of `R1` and `R2`.
+  var m1, m2;
+  // To detect regions i.e. `R1` and `R2`.
+  var rgxRegions = /[aeiouy]+([^aeiouy]{1}.+)/;
+  m1 = rgxRegions.exec( s );
+  if ( !m1 ) return ( { r1: '', r2: '' } );
+  m1 = m1[ 1 ].slice( 1 );
+  // Handle exceptions here to prevent over stemming.
+  m1 = ( ( /^(gener|commun|arsen)/ ).test( s ) ) ? s.replace( /^(gener|commun|arsen)(.*)/, '$2') : m1;
+  m2 = rgxRegions.exec( m1 );
+  if ( !m2 ) return ( { r1: m1, r2: '' } );
+  m2 = m2[ 1 ].slice( 1 );
+  return ( { r1: m1, r2: m2 } );
+}; // markRegions()
+
+// ### step1a
+/**
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var step1a = function ( s ) {
+  var wordPart;
+  if ( rgxSFXsses.test( s ) ) return ( s.replace( rgxSFXsses, '$1ss' ) );
+  if ( rgxSFXiedORies2.test( s ) ) return ( s.replace( rgxSFXiedORies2, '$1i' ) );
+  if ( rgxSFXiedORies1.test( s ) ) return ( s.replace( rgxSFXiedORies1, '$1ie' ) );
+  if ( rgxSFXusORss.test( s ) ) return ( s );
+  wordPart = s.replace( rgxSFXs, '$1' );
+  if ( ( /[aeiuouy](.+)$/ ).test( wordPart ) ) return ( s.replace( rgxSFXs, '$1' ) );
+  return ( s );
+}; // step1a()
+
+// ### step1b
+/**
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var step1b = function ( s ) {
+  var rgn = markRegions( s ),
+  sd;
+  // Search for the longest among the `eedly|eed` suffixes.
+  if ( rgxSFXeedlyOReed.test( s ) )
+    // Replace by ee if in R1.
+    return ( rgxSFXeedlyOReed.test( rgn.r1 ) ? s.replace( rgxSFXeedlyOReed, '$1ee' ) : s );
+  // Delete `ed|edly|ingly|ing` if the preceding word part contains a vowel.
+  if ( rgxSFXedORedlyORinglyORing.test( s ) ) {
+    sd = s.replace( rgxSFXedORedlyORinglyORing, '$1' );
+    rgn = markRegions( sd );
+    // And after deletion, return either
+    return ( rgxSFXatORblORiz.test( sd ) ) ? ( sd + 'e' ) :
+            // or
+            ( rgxDouble.test( sd ) ) ? ( sd.replace( /.$/, '' ) ) :
+              // or
+              ( ( isShort( sd ) ) && ( rgn.r1 === '' ) ) ? ( sd + 'e' ) :
+                // or
+                sd;
+  }
+  return ( s );
+}; // step1b()
+
+// ### step1c
+/**
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var step1c = function ( s ) {
+  return ( s.replace( rgxSFXyOR3, '$1i') );
+}; // step1c()
+
+// ### step2
+/**
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var step2 = function ( s ) {
+  var i, imax,
+      rgn = markRegions( s ),
+      us; // updated s.
+  var match = s.match( rgxSFXstep2 );
+  match = ( match === null ) ? '$$$$$' : match[ 1 ];
+  if ( rgn.r1.indexOf( match ) !== -1 ) {
+    for ( i = 0, imax = rgxSFXstep2WithReplacements.length; i < imax; i += 1 ) {
+      us = s.replace( rgxSFXstep2WithReplacements[ i ].rgx, rgxSFXstep2WithReplacements[ i ].replacement );
+      if ( s !== us ) return ( us );
+    }
+  }
+  return ( s );
+}; // step2()
+
+// ### step3
+/**
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var step3 = function ( s ) {
+  var i, imax,
+      rgn = markRegions( s ),
+      us; // updated s.
+  var match = s.match( rgxSFXstep3 );
+  match = ( match === null ) ? '$$$$$' : match[ 1 ];
+
+  if ( rgn.r1.indexOf( match ) !== -1 ) {
+    for ( i = 0, imax = rgxSFXstep3WithReplacements.length; i < imax; i += 1 ) {
+      us = s.replace( rgxSFXstep3WithReplacements[ i ].rgx, rgxSFXstep3WithReplacements[ i ].replacement );
+      if ( s !== us ) return ( us );
+    }
+    if ( ( /ative/ ).test( rgn.r2 ) ) return s.replace( /ative$/, '' );
+  }
+  return ( s );
+}; // step3()
+
+// ### step4
+/**
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var step4 = function ( s ) {
+  var rgn = markRegions( s );
+  var match = s.match( rgxSFXstep4Full );
+  match = ( match === null ) ? '$$$$$' : match[ 1 ];
+  if ( rgxSFXstep4Full.test( s ) &&  rgn.r2.indexOf( match ) !== -1 ) {
+    return rgxSFXstep4.test( s ) ? s.replace( rgxSFXstep4, '' ) :
+    (
+      rgxSFXstep4ion.test( s ) ?
+      s.replace( rgxSFXstep4ion, '$1$2') :
+      s
+    );
+  }
+  return ( s );
+}; // step4()
+
+// ### step5
+/**
+ * @param {String} s Input string
+ * @return {String} Processed string
+ * @private
+ */
+var step5 = function ( s ) {
+  var preceding, rgn;
+  // Search for the `e` suffixes.
+  rgn = markRegions( s );
+  if ( ( /e$/i ).test( s ) ) {
+    preceding = s.replace( /e$/, '' );
+    return (
+              // Found: delete if in R2, or in R1 and not preceded by a short syllable
+              ( /e/ ).test( rgn.r2 ) || ( ( /e/ ).test( rgn.r1 ) && !isShort( preceding ) ) ?
+              preceding : s
+           );
+  }
+  // Search for the `l` suffixes.
+  if ( ( /l$/ ).test( s ) ) {
+    rgn = markRegions( s );
+    // Found: delete if in R2
+    return ( rgn.r2 && ( /l$/ ).test( rgn.r2 ) ? s.replace( ( /ll$/ ), 'l' ) : s );
+  }
+  // If nothing happens, must return the string!
+  return ( s );
+}; // step5()
+
+// ## Public functions
+// ### stem
+/**
+ *
+ * Stems an inflected `word` using Porter2 stemming algorithm.
+ *
+ * @param {string} word — word to be stemmed.
+ * @return {string} — the stemmed word.
+ *
+ * @example
+ * stem( 'consisting' );
+ * // -> consist
+ */
+var stem = function ( word ) {
+  var str = word.toLowerCase();
+  if ( str.length < 3 ) return ( str );
+  if ( exceptions1[ str ] ) return ( exceptions1[ str ] );
+  str = prelude( str );
+  str = step1a( str );
+
+  if ( !rgxException2.test( str ) ) {
+    str = step1b( str );
+    str = step1c( str );
+    str = step2( str );
+    str = step3( str );
+    str = step4( str );
+    str = step5( str );
+  }
+
+  str = str.replace( /3/g , 'y' );
+  return ( str );
+}; // stem()
+
+// Export stem function.
+module.exports = stem;
+
+},{}],51:[function(require,module,exports){
 var bm25 = require( 'wink-bm25-text-search' );
 var nlp = require( 'wink-nlp-utils' );
-var docs = require( 'wink-bm25-text-search/sample-data/data-for-wink-bm25.json' );
+var docs = require( 'wink-bm25-text-search/sample-data/demo-data-for-wink-bm25.json' );
+var s = require('wink-bm25-text-search/runkit/get-spotted-terms.js');
+
 
 var engine = bm25();
-engine.defineConfig( { fldWeights: { title: 4, body: 1, tags: 2 } } );
-engine.definePrepTasks( [
+// Define preparatory task pipe!
+var pipe = [
   nlp.string.lowerCase,
-  nlp.string.removeExtraSpaces,
   nlp.string.tokenize0,
-  nlp.tokens.propagateNegations,
   nlp.tokens.removeWords,
-  nlp.tokens.stem
-], 'body' );
-engine.definePrepTasks( [
-  nlp.string.lowerCase,
-  nlp.string.removeExtraSpaces,
-  nlp.string.tokenize0,
-  nlp.tokens.propagateNegations,
-  nlp.tokens.stem
-] );
+  nlp.tokens.stem,
+  nlp.tokens.propagateNegations
+];
+// Contains search query.
+var query;
 
+// Step I: Define config
+// Only field weights are required in this example.
+engine.defineConfig( { fldWeights: { title: 1, body: 2 } } );
+// Step II: Define PrepTasks pipe.
+// Set up 'default' preparatory tasks i.e. for everything else
+engine.definePrepTasks( pipe );
+
+// Step III: Add Docs
+// Add documents now...
 docs.forEach( function ( doc, i ) {
+  // Note, 'i' becomes the unique id for 'doc'
   engine.addDoc( doc, i );
 } );
+
+// Step IV: Consolidate
+// Consolidate before searching
 engine.consolidate();
 
 window.addEventListener('DOMContentLoaded', function () {
@@ -5528,22 +5583,31 @@ window.addEventListener('DOMContentLoaded', function () {
       text('other', '')
       show('noresults');
     } else {
+      var spotted = s(results,el.target.value,docs, ['title','body'],pipe,3);
       hide('noresults');
       var result = docs[results[0][0]];
       show('title');
       show('body');
       text('title', result.title);
-      text('body', result.body);
+      html('body', highlightTerms(result.body,spotted));
       text('other', '')
       if ( results.length > 1 ) {
         for (var i = 1; i < results.length; i++) {
           var result = docs[results[i][0]];
           document.getElementById('other').innerHTML += "<h3>" + result.title + "</h3>";
-          document.getElementById('other').innerHTML += "<small>" + result.body + "</small>";
+          document.getElementById('other').innerHTML += "<small>" + highlightTerms(result.body,spotted) + "</small>";
         }
       }
     }
   })
+
+  function highlightTerms(body, spotted) {
+    spotted.forEach( function (term) {
+      var r = new RegExp( '\\W('+term+')\\W','ig');
+      body = body.replace(r,'<mark>$1</mark> ');
+    })
+    return body;
+  }
 
   function hide(id) {
     document.getElementById(id).setAttribute('class', 'hidden');
@@ -5558,6 +5622,9 @@ window.addEventListener('DOMContentLoaded', function () {
   function text(id,text) {
     document.getElementById(id).innerText = text;
   }
+  function html(id,text) {
+    document.getElementById(id).innerHTML = text;
+  }
 });
 
-},{"wink-bm25-text-search":2,"wink-bm25-text-search/sample-data/data-for-wink-bm25.json":1,"wink-nlp-utils":46}]},{},[50]);
+},{"wink-bm25-text-search":3,"wink-bm25-text-search/runkit/get-spotted-terms.js":1,"wink-bm25-text-search/sample-data/demo-data-for-wink-bm25.json":2,"wink-nlp-utils":49}]},{},[51]);

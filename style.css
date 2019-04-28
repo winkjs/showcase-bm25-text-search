@@ -95,3 +95,12 @@ h3 {
 p {
   margin-top: 0;
 }
+
+mark {
+  background: #6C307D;
+  color: white;
+  padding: 0 0.3rem;
+  display: inline-block;
+  margin: 0 0.3rem;
+  border-radius: 2px;
+}

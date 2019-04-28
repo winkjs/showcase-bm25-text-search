@@ -23,7 +23,7 @@
     "grunt-contrib-watch": "^1.1.0"
   },
   "dependencies": {
-    "wink-bm25-text-search": "^3.0.0",
-    "wink-nlp-utils": "^2.0.3"
+    "wink-bm25-text-search": "^3.0.1",
+    "wink-nlp-utils": "^2.0.4"
   }
 }
