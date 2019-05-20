@@ -5560,6 +5560,8 @@ docs.forEach( function ( doc, i ) {
 engine.consolidate();
 
 window.addEventListener('DOMContentLoaded', function () {
+  showData();
+
   hide('title');
   hide('body');
   hide('noresults');
@@ -5619,12 +5621,34 @@ window.addEventListener('DOMContentLoaded', function () {
       document.getElementById(id).setAttribute('class', 'shown')
     },0)
   }
+  function toggle(id) {
+    var elem = document.getElementById(id);
+    if (window.getComputedStyle(elem).display === 'block') {
+      hide(id);
+      return;
+    }
+    show(id);
+  };
   function text(id,text) {
     document.getElementById(id).innerText = text;
   }
   function html(id,text) {
     document.getElementById(id).innerHTML = text;
   }
+
+  function showData() {
+    var table = document.getElementById('data-table');
+    docs.forEach( function (doc) {
+      table.innerHTML += '<tr>' +
+        '<th>' + doc.title + '</th>' +
+        '<td>' + doc.body + '</td>' +
+        '</tr>';
+    })
+  }
+
+  document.querySelector('.sample-data-link').addEventListener('click', function () {
+    toggle('sample-data');
+  })
 });
 
 },{"wink-bm25-text-search":3,"wink-bm25-text-search/runkit/get-spotted-terms.js":1,"wink-bm25-text-search/sample-data/demo-data-for-wink-bm25.json":2,"wink-nlp-utils":49}]},{},[51]);

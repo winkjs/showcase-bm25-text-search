@@ -104,3 +104,27 @@ mark {
   margin: 0 0.3rem;
   border-radius: 2px;
 }
+
+.sample-data {
+  display: none;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid gray;
+  vertical-align: text-bottom;
+  padding: 1rem;
+}
+
+th {
+  width: 33%;
+  text-align: left;
+}
+
+td {
+  background: white;
+  font-size: 0.75rem;
+}
