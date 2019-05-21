@@ -123,5 +123,11 @@ window.addEventListener('DOMContentLoaded', function () {
 
   document.querySelector('.sample-data-link').addEventListener('click', function () {
     toggle('sample-data');
-  })
+
+    if (window.getComputedStyle(document.getElementById('sample-data')).display === 'block') {
+      document.querySelector('.sample-data-link').innerText = 'Hide Sample Data';
+    } else {
+      document.querySelector('.sample-data-link').innerText = 'Sample Data';
+    }
+  });
 });

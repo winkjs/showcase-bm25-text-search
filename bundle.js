@@ -5648,7 +5648,13 @@ window.addEventListener('DOMContentLoaded', function () {
 
   document.querySelector('.sample-data-link').addEventListener('click', function () {
     toggle('sample-data');
-  })
+
+    if (window.getComputedStyle(document.getElementById('sample-data')).display === 'block') {
+      document.querySelector('.sample-data-link').innerText = 'Hide Sample Data';
+    } else {
+      document.querySelector('.sample-data-link').innerText = 'Sample Data';
+    }
+  });
 });
 
 },{"wink-bm25-text-search":3,"wink-bm25-text-search/runkit/get-spotted-terms.js":1,"wink-bm25-text-search/sample-data/demo-data-for-wink-bm25.json":2,"wink-nlp-utils":49}]},{},[51]);
