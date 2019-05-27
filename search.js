@@ -1,11 +1,10 @@
 var bm25 = require( 'wink-bm25-text-search' );
 var nlp = require( 'wink-nlp-utils' );
 var docs = require( 'wink-bm25-text-search/sample-data/demo-data-for-wink-bm25.json' );
-var s = require('wink-bm25-text-search/runkit/get-spotted-terms.js');
+var getSpottedTerms = require('wink-bm25-text-search/runkit/get-spotted-terms.js');
 
 
 var engine = bm25();
-// Define preparatory task pipe!
 var pipe = [
   nlp.string.lowerCase,
   nlp.string.tokenize0,
@@ -13,25 +12,11 @@ var pipe = [
   nlp.tokens.stem,
   nlp.tokens.propagateNegations
 ];
-// Contains search query.
-var query;
-
-// Step I: Define config
-// Only field weights are required in this example.
 engine.defineConfig( { fldWeights: { title: 1, body: 2 } } );
-// Step II: Define PrepTasks pipe.
-// Set up 'default' preparatory tasks i.e. for everything else
 engine.definePrepTasks( pipe );
-
-// Step III: Add Docs
-// Add documents now...
 docs.forEach( function ( doc, i ) {
-  // Note, 'i' becomes the unique id for 'doc'
   engine.addDoc( doc, i );
 } );
-
-// Step IV: Consolidate
-// Consolidate before searching
 engine.consolidate();
 
 window.addEventListener('DOMContentLoaded', function () {
@@ -60,7 +45,7 @@ window.addEventListener('DOMContentLoaded', function () {
       text('other', '')
       show('noresults');
     } else {
-      var spotted = s(results,el.target.value,docs, ['title','body'],pipe,3);
+      var spotted = getSpottedTerms(results,el.target.value,docs, ['title','body'],pipe,3);
       hide('noresults');
       var result = docs[results[0][0]];
       show('title');
